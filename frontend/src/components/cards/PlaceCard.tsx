@@ -66,7 +66,7 @@ export default function PlaceCard({ place }: PlaceProps) {
                 </p>
               )}
             </div>
-            <div className="flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-lg" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+            <div className="flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-lg border border-[var(--border)]" style={{ backgroundColor: 'var(--bg-elevated)' }}>
               <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
               <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
                 {isNaN(rating) ? '—' : rating.toFixed(1)}

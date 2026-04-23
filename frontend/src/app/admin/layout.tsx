@@ -4,13 +4,12 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
-import { 
-  LayoutDashboard, 
-  MapPin, 
-  Calendar, 
-  Users, 
-  FileText, 
-  LogOut,
+import {
+  LayoutDashboard,
+  MapPin,
+  Calendar,
+  Users,
+  FileText,
   ShieldCheck
 } from "lucide-react";
 
@@ -46,45 +45,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   ];
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--bg-default)]">
-      {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 border-r border-[var(--border)] surface-elevated h-full flex flex-col">
-        <div className="h-16 flex items-center px-6 border-b border-[var(--border)]">
-          <Link href="/" className="flex items-center gap-2 group">
-            <ShieldCheck className="h-6 w-6 text-red-500 group-hover:scale-110 transition-transform" />
-            <span className="font-bold tracking-tight text-[var(--text-primary)]">Admin Portal</span>
+    <div className="admin-theme flex h-[calc(100vh-72px)] overflow-hidden bg-[var(--bg-default)]">
+      {/* Sidebar - Compact */}
+      <aside className="w-20 lg:w-44 flex-shrink-0 border-r border-[var(--border)] surface-elevated h-full flex flex-col transition-all duration-300 group">
+        <div className="h-16 flex items-center px-6 border-b border-[var(--border)] justify-center lg:justify-start">
+          <Link href="/" className="flex items-center gap-2 group/logo">
+            <ShieldCheck className="h-6 w-6 text-red-500 group-hover/logo:scale-110 transition-transform" />
+            <span className="font-black tracking-tighter text-[var(--text-primary)] hidden lg:block uppercase text-xs">Vibe Panel</span>
           </Link>
         </div>
-        
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {navItems.map((item) => (
             <Link
               key={item.name}
               href={item.href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-colors text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10"
+              title={item.name}
+              className="flex items-center gap-3 px-3 py-3 rounded-xl font-medium text-sm transition-all text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/5 group/nav"
             >
-              {item.icon}
-              {item.name}
+              <span className="flex-shrink-0 transition-transform group-hover/nav:scale-110">{item.icon}</span>
+              <span className="hidden lg:block truncate">{item.name}</span>
             </Link>
           ))}
         </nav>
-
-        <div className="p-4 flex-shrink-0 border-t border-[var(--border)]">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 text-red-500 font-bold hover:bg-red-500 hover:text-white transition-all shadow-[0_0_15px_rgba(239,68,68,0.15)]"
-          >
-            <LogOut className="h-4 w-4" /> Sign Out
-          </button>
-        </div>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 relative overflow-y-auto focus:outline-none">
-        <div className="py-6 px-8">
-          <h1 className="text-3xl font-extrabold tracking-tight mb-8" style={{ color: 'var(--text-primary)' }}>
-            Welcome back, {user?.display_name || 'Admin'}
-          </h1>
+      <main className="flex-1 relative overflow-y-auto focus:outline-none bg-[var(--bg-page)]">
+        <div className="p-4 lg:p-8 max-w-[1600px] mx-auto">
           {children}
         </div>
       </main>

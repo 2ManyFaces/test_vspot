@@ -23,7 +23,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     
     // Admin routes
-    Route::get('/admin/stats', [\App\Http\Controllers\Api\AdminDashboardController::class, 'stats']);
+    Route::prefix('admin')->group(function () {
+        Route::get('/stats', [\App\Http\Controllers\Api\AdminDashboardController::class, 'stats']);
+        
+        // Places Management
+        Route::apiResource('places', \App\Http\Controllers\Api\Admin\ManagePlacesController::class);
+        
+        // Events Management
+        Route::apiResource('events', \App\Http\Controllers\Api\Admin\ManageEventsController::class);
+        
+        // Users Management
+        Route::get('/users', [\App\Http\Controllers\Api\Admin\ManageUsersController::class, 'index']);
+        Route::post('/users/{id}/toggle-status', [\App\Http\Controllers\Api\Admin\ManageUsersController::class, 'toggleStatus']);
+        
+        // Blog Management
+        Route::apiResource('blog-posts', \App\Http\Controllers\Api\Admin\ManageBlogController::class);
+    });
     
     // User routes
     Route::post('/reviews', [ReviewController::class, 'store']);

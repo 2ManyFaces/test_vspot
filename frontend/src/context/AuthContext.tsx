@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/auth/me", {
+        const res = await fetch("http://localhost:8000/api/auth/me", {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
@@ -73,17 +73,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const logout = useCallback(() => {
+    const token = Cookies.get("auth_token");
     Cookies.remove("auth_token");
     setUser(null);
     setRole(null);
     
     // Optional: Call strictly backend logout to invalidate token
-    fetch("http://127.0.0.1:8000/api/auth/logout", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${Cookies.get("auth_token")}`,
-      },
-    }).catch(() => {});
+    if (token) {
+      fetch("http://localhost:8000/api/auth/logout", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      }).catch(() => {});
+    }
   }, []);
 
   return (

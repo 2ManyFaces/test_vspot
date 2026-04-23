@@ -26,6 +26,9 @@ class Event extends Model
         'end_time',
         'average_rating',
         'total_reviews',
+        'price_type',
+        'price_amount',
+        'ticket_url',
         'is_published',
         'created_by',
     ];

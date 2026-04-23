@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { MapPin, Sun, Moon, Heart, User, Compass, LogOut, BookOpen } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';

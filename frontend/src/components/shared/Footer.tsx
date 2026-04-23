@@ -1,4 +1,7 @@
+"use client";
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { MapPin } from 'lucide-react';
 
 // Social icons as inline SVGs (not available in lucide-react)
@@ -53,6 +56,11 @@ const socials = [
 ];
 
 export default function Footer() {
+  const pathname = usePathname();
+  const isAdmin = pathname.startsWith('/admin');
+
+  if (isAdmin) return null;
+
   return (
     <footer className="mt-auto" style={{ backgroundColor: 'var(--bg-card)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">

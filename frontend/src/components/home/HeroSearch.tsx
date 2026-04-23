@@ -38,7 +38,7 @@ export default function HeroSearch() {
       {/* Search Input */}
       <form onSubmit={handleSearch}>
         <div
-          className="flex items-center gap-3 px-5 py-4 rounded-2xl transition-all duration-200"
+          className="flex items-center gap-3 px-5 py-4 rounded-2xl transition-all duration-200 border-2 border-[var(--border)] focus-within:border-[var(--accent-brand)] focus-within:shadow-[0_0_20px_var(--accent-brand-glow)] animate-breathe"
           style={{
             backgroundColor: 'var(--bg-card)',
           }}
@@ -72,7 +72,7 @@ export default function HeroSearch() {
           <button
             key={tag}
             onClick={() => setQuery(tag)}
-            className="text-sm px-4 py-2 rounded-xl transition-all duration-200 hover:text-brand-400 hover:bg-brand-600/10"
+            className="text-sm px-4 py-2 rounded-xl transition-all duration-200 hover:text-brand-400 hover:bg-brand-600/10 border border-[var(--border)] hover:border-[var(--accent-brand)]"
             style={{ color: 'var(--text-muted)', backgroundColor: 'var(--bg-elevated)' }}
           >
             {tag}

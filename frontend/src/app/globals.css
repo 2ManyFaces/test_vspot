@@ -21,13 +21,16 @@
   --bg-page: #09090b;
   --bg-card: #111115;
   --bg-elevated: #18181c;
-  --border: rgba(255, 255, 255, 0.04);
+  --border: rgba(255, 255, 255, 0.1);
   --border-hover: rgba(14, 165, 233, 0.35);
   /* Updated to Blue 500 */
   --text-primary: #f1f5f9;
   --text-muted: #71717a;
   --nav-bg: #09090b;
-  /* Non-transparent */
+  --accent-brand: #0ea5e9;
+  --accent-brand-glow: rgba(14, 165, 233, 0.15);
+  --input-bg: #111115;
+  --bg-card-tint: #0f172a;
 }
 
 /* ─── LIGHT MODE ─── */
@@ -42,8 +45,21 @@
   --text-primary: #0f0f14;
   --text-muted: #64748b;
   --nav-bg: #ffffff;
-  /* Non-transparent */
+  --accent-brand: #0284c7;
+  --accent-brand-glow: rgba(2, 132, 199, 0.08);
+  --input-bg: #f8f9fb;
 }
+
+/* ─── Admin Scoped Theme (Red) ─── */
+.admin-theme {
+  --accent-brand: #f43f5e;
+  --accent-brand-glow: rgba(244, 63, 94, 0.2);
+  --bg-card-tint: #1e1b1b;
+}
+
+.admin-theme .text-red-500 { color: #f43f5e; }
+.admin-theme .bg-red-500 { background-color: #f43f5e; }
+.admin-theme .hover\:bg-red-600:hover { background-color: #e11d48; }
 
 /* ─── Base ─── */
 *,
@@ -75,11 +91,24 @@ body {
 .surface {
   background-color: var(--bg-card);
   border-radius: 1.25rem;
+  border: 1px solid var(--border);
+}
+
+:root:not(.light) .surface {
+  border-color: rgba(14, 165, 233, 0.1);
 }
 
 .surface-elevated {
   background-color: var(--bg-elevated);
   border-radius: 1.25rem;
+  border: 1px solid var(--border);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+:root:not(.light) .surface-elevated {
+  border-color: rgba(14, 165, 233, 0.25);
+  background-image: linear-gradient(to bottom right, var(--bg-elevated), var(--bg-card-tint));
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 4px 10px -2px rgba(14, 165, 233, 0.1);
 }
 
 /* Card with smooth hover */
@@ -87,7 +116,13 @@ body {
   background-color: var(--bg-card);
   border-radius: 1.25rem;
   overflow: hidden;
+  border: 2px solid var(--border);
   transition: transform 0.3s cubic-bezier(.22, .61, .36, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+:root:not(.light) .vcard {
+  border-color: rgba(14, 165, 233, 0.25);
+  background-image: linear-gradient(to bottom, var(--bg-card), var(--bg-card-tint));
 }
 
 .vcard:hover {
@@ -141,10 +176,92 @@ body {
   border-radius: 1.25rem;
 }
 
-/* ─── Filters glass panel ─── */
+/* ─── Admin Utilities ─── */
+.admin-card {
+  background-color: var(--bg-elevated);
+  border-radius: 1.25rem;
+  border: 2px solid var(--border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:root:not(.light) .admin-card {
+  border-color: rgba(14, 165, 233, 0.2);
+  background-image: linear-gradient(to bottom right, var(--bg-elevated), var(--bg-card-tint));
+}
+
+.admin-card:hover {
+  border-color: var(--accent-blue);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.4), 0 0 20px -5px var(--accent-blue-glow);
+}
+
+.search-input {
+  width: 100%;
+  padding-left: 2.5rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  background-color: var(--input-bg);
+  border: 2px solid var(--border);
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+:root:not(.light) .search-input {
+  border-color: rgba(14, 165, 233, 0.25);
+}
+
+.search-input:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px var(--accent-blue-glow);
+}
+
 .filters-panel {
   background-color: var(--bg-card);
   border-radius: 1.25rem;
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+:root:not(.light) .filters-panel {
+  border-color: rgba(14, 165, 233, 0.2);
+  background-image: linear-gradient(to bottom, var(--bg-card), var(--bg-card-tint));
+}
+
+/* ─── Animations ─── */
+@keyframes breathe {
+  0%, 100% {
+    border-color: var(--accent-brand-glow);
+    box-shadow: 0 0 5px rgba(14, 165, 233, 0.05);
+  }
+  50% {
+    border-color: var(--accent-brand);
+    box-shadow: 0 0 15px var(--accent-brand-glow);
+  }
+}
+
+.animate-breathe {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+.animate-wiggle {
+  display: inline-block;
+  animation: wiggle 0.3s ease-in-out infinite;
 }
 
 /* ─── Scrollbars ─── */
