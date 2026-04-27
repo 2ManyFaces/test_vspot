@@ -7,7 +7,7 @@ import Link from "next/link";
 async function getPlaces(searchParams: any) {
   try {
     const query = new URLSearchParams(searchParams).toString();
-    const res = await fetch(`http://127.0.0.1:8000/api/places?${query}`, { 
+    const res = await fetch(`http://localhost:8000/api/places?${query}`, { 
       cache: 'no-store' 
     });
     
@@ -73,3 +73,4 @@ export default async function PlacesPage({ searchParams }: { searchParams: Promi
     </div>
   );
 }
+

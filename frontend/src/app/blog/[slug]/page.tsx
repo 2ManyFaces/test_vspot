@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 
 async function getPost(slug: string) {
   try {
-    const res = await fetch(`http://127.0.0.1:8000/api/blog/${encodeURIComponent(slug)}`, { cache: 'no-store' });
+    const res = await fetch(`http://localhost:8000/api/blog/${encodeURIComponent(slug)}`, { cache: 'no-store' });
     if (res.status === 404) return null;
     if (!res.ok) throw new Error('Failed');
     return res.json();
@@ -59,8 +59,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       {/* Cover Image */}
       <div className="relative h-72 sm:h-96 mt-6 overflow-hidden">
         <img
-          src={post.featured_image_url}
+          src={post.featured_image_url?.startsWith('http') ? post.featured_image_url : `http://localhost:8000${post.featured_image_url}`}
           alt={post.title}
+          referrerPolicy="no-referrer"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />

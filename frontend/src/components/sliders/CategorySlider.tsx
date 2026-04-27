@@ -84,3 +84,4 @@ export default function CategorySlider({ category, places }: { category: string,
     </div>
   );
 }
+

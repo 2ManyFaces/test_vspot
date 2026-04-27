@@ -32,8 +32,7 @@ class ManageEventsController extends Controller
             'end_date' => 'nullable|date',
             'start_time' => 'nullable|string',
             'end_time' => 'nullable|string',
-            'area_name' => 'required|string',
-            'area_zone' => 'required|string',
+            'area_name' => 'required|string|in:' . implode(',', \App\Models\Place::DHAKA_THANAS),
             'organiser_name' => 'nullable|string',
             'cover_image_url' => 'nullable|string',
             'price_type' => 'required|in:free,paid',
@@ -43,10 +42,14 @@ class ManageEventsController extends Controller
             'place_id' => 'nullable|exists:places,id',
         ]);
 
-        $validated['created_by'] = $request->user()->id;
-        $validated['slug'] = \Illuminate\Support\Str::slug($validated['title']) . '-' . time();
+        $user = $request->user();
+        $adminId = $user instanceof \App\Models\Admin ? $user->id : \App\Models\Admin::first()->id;
+
+        $eventData = $validated;
+        $eventData['created_by'] = $adminId;
+        $eventData['slug'] = \Illuminate\Support\Str::slug($validated['title']) . '-' . time();
         
-        $event = Event::create($validated);
+        $event = Event::create($eventData);
 
         return response()->json([
             'status' => 'success',
@@ -75,8 +78,7 @@ class ManageEventsController extends Controller
             'end_date' => 'nullable|date',
             'start_time' => 'nullable|string',
             'end_time' => 'nullable|string',
-            'area_name' => 'sometimes|required|string',
-            'area_zone' => 'sometimes|required|string',
+            'area_name' => 'sometimes|required|string|in:' . implode(',', \App\Models\Place::DHAKA_THANAS),
             'organiser_name' => 'nullable|string',
             'cover_image_url' => 'nullable|string',
             'price_type' => 'sometimes|required|in:free,paid',

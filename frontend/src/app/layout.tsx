@@ -16,16 +16,29 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <AuthProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body className="antialiased min-h-screen flex flex-col">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const theme = localStorage.getItem('vibespot-theme') || 'dark';
+                document.documentElement.classList.add(theme);
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="antialiased min-h-screen flex flex-col" suppressHydrationWarning>
+        <AuthProvider>
           <Providers>
             <Navbar />
             <main className="flex-1 relative z-0">{children}</main>
             <Footer />
           </Providers>
-        </body>
-      </html>
-    </AuthProvider>
+        </AuthProvider>
+      </body>
+    </html>
   );
 }
+

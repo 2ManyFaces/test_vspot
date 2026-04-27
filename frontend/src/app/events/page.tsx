@@ -7,7 +7,7 @@ import Link from 'next/link';
 async function getEvents(searchParams: any) {
   try {
     const query = new URLSearchParams(searchParams).toString();
-    const res = await fetch(`http://127.0.0.1:8000/api/events?${query}`, { cache: 'no-store' });
+    const res = await fetch(`http://localhost:8000/api/events?${query}`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed');
     return res.json();
   } catch {
@@ -49,7 +49,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
           Explore Events
         </h1>
         <p className="text-lg" style={{ color: 'var(--text-muted)' }}>
-          Cultural festivals, underground gigs, and community meetups.
+          Cultural Festivals, Concerts, and Community Meetups and More.
         </p>
       </div>
 
@@ -66,7 +66,7 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
           </div>
           <p className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>No events found</p>
           <p className="mt-2 text-sm max-w-sm mx-auto" style={{ color: 'var(--text-muted)' }}>Try adjusting your filters or check back later for new vibes.</p>
-          <Link 
+          <Link
             href="/events"
             className="mt-8 px-6 py-2.5 bg-brand-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-brand-500/20 hover:bg-brand-400 transition-all block"
           >
@@ -125,8 +125,8 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
 
           {ongoingEvents.length === 0 && upcomingEvents.length === 0 && (
             <div className="empty-state text-center py-20 rounded-2xl">
-               <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>No current or future events found in this category.</p>
-               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Try exploring other categories or areas.</p>
+              <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>No current or future events found in this category.</p>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Try exploring other categories or areas.</p>
             </div>
           )}
         </div>
@@ -134,3 +134,4 @@ export default async function EventsPage({ searchParams }: { searchParams: Promi
     </div>
   );
 }
+

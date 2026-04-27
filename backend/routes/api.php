@@ -38,6 +38,9 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // Blog Management
         Route::apiResource('blog-posts', \App\Http\Controllers\Api\Admin\ManageBlogController::class);
+        
+        // Reviews Management
+        Route::apiResource('reviews', \App\Http\Controllers\Api\Admin\ManageReviewsController::class)->only(['index', 'destroy']);
     });
     
     // User routes
@@ -49,10 +52,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile/activity', [ProfileController::class, 'activity']);
     
     Route::post('/wishlist/toggle', [\App\Http\Controllers\Api\WishlistController::class, 'toggle']);
+    Route::get('/wishlist/ids', [\App\Http\Controllers\Api\WishlistController::class, 'ids']);
     Route::get('/wishlist', [\App\Http\Controllers\Api\WishlistController::class, 'index']);
     
     Route::post('/check-ins', [\App\Http\Controllers\Api\CheckInController::class, 'store']);
     Route::get('/check-ins', [\App\Http\Controllers\Api\CheckInController::class, 'index']);
+    Route::get('/check-ins/status', [\App\Http\Controllers\Api\CheckInController::class, 'status']);
+
+    Route::get('/notifications', [\App\Http\Controllers\Api\NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead']);
+    Route::post('/notifications/clear-all', [\App\Http\Controllers\Api\NotificationController::class, 'clearAll']);
 });
 
 Route::get('/user', function (Request $request) {

@@ -9,7 +9,7 @@ async function getWishlist() {
 
     if (!token) return null;
 
-    const res = await fetch('http://127.0.0.1:8000/api/wishlist', {
+    const res = await fetch('http://localhost:8000/api/wishlist', {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store'
     });
@@ -76,7 +76,7 @@ export default async function WishlistPage() {
               {places.map((place: any) => (
                 <Link key={place.id} href={`/places/${place.id}`} className="group relative block rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
                   <div className="aspect-[4/3] w-full relative">
-                    <img src={place.cover_image_url} alt={place.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img src={place.cover_image_url} alt={place.name} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     <div className="absolute bottom-5 left-5 right-5">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-brand-400 mb-1 block">
@@ -118,7 +118,7 @@ export default async function WishlistPage() {
               {events.map((event: any) => (
                 <Link key={event.id} href={`/events/${event.id}`} className="group relative block rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300">
                   <div className="aspect-[4/3] w-full relative">
-                    <img src={event.cover_image_url} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img src={event.cover_image_url} alt={event.title} referrerPolicy="no-referrer" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     <div className="absolute bottom-5 left-5 right-5">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-brand-400 mb-1 block">
@@ -126,7 +126,9 @@ export default async function WishlistPage() {
                       </span>
                       <h3 className="text-xl font-bold text-white mb-1">{event.title}</h3>
                       <div className="flex items-center gap-1 text-white/70 text-xs">
-                        <Calendar className="h-3 w-3" /> {new Date(event.event_date).toLocaleDateString()}
+                        <Calendar className="h-3 w-3" /> 
+                        {new Date(event.event_date).toLocaleDateString()}
+                        {event.end_date && ` - ${new Date(event.end_date).toLocaleDateString()}`}
                       </div>
                     </div>
                   </div>
@@ -143,3 +145,4 @@ export default async function WishlistPage() {
     </div>
   );
 }
+

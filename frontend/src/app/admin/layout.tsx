@@ -10,7 +10,8 @@ import {
   Calendar,
   Users,
   FileText,
-  ShieldCheck
+  ShieldCheck,
+  MessageSquare
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -38,10 +39,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navItems = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: <LayoutDashboard className="w-5 h-5" /> },
+    { name: 'Users', href: '/admin/users', icon: <Users className="w-5 h-5" /> },
     { name: 'Places', href: '/admin/places', icon: <MapPin className="w-5 h-5" /> },
     { name: 'Events', href: '/admin/events', icon: <Calendar className="w-5 h-5" /> },
-    { name: 'Users', href: '/admin/users', icon: <Users className="w-5 h-5" /> },
     { name: 'Blog Posts', href: '/admin/blog', icon: <FileText className="w-5 h-5" /> },
+    { name: 'Reviews', href: '/admin/reviews', icon: <MessageSquare className="w-5 h-5" /> },
   ];
 
   return (
@@ -79,3 +81,4 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </div>
   );
 }
+

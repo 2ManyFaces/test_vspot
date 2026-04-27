@@ -10,6 +10,17 @@ class Place extends Model
 {
     use SoftDeletes, HasFactory;
 
+    public const DHAKA_THANAS = [
+        "Adabor", "Badda", "Bangsal", "Bimanbandar", "Cantonment", "Chowkbazar",
+        "Darus Salam", "Demra", "Dhanmondi", "Gendaria", "Gulshan", "Hazaribagh",
+        "Kadamtali", "Kafrul", "Kalabagan", "Kamrangirchar", "Khilgaon", "Khilkhet",
+        "Kotwali", "Lalbagh", "Mirpur (Model)", "Mohammadpur", "Motijheel",
+        "New Market", "Pallabi", "Paltan", "Panthapath", "Ramna", "Rampura",
+        "Sabujbagh", "Shah Ali", "Shahbagh", "Sher-e-Bangla Nagar", "Shyampur",
+        "Sutrapur", "Tejgaon", "Tejgaon Industrial Area", "Turag", "Uttara",
+        "Uttar Khan", "Vatara", "Wari"
+    ];
+
     protected $fillable = [
         'name',
         'category',

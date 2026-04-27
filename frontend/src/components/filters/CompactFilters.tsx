@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Search, MapPin, Tag, ChevronDown, Filter } from 'lucide-react';
+import { Search, MapPin, Tag, ChevronDown, Filter, Star } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { DHAKA_THANAS } from '@/constants/areas';
 
 interface FilterProps {
   type: 'places' | 'events';
@@ -15,6 +16,7 @@ export default function CompactFilters({ type }: FilterProps) {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [category, setCategory] = useState(searchParams.get('category') || 'All');
   const [area, setArea] = useState(searchParams.get('area') || 'All');
+  const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'default');
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -23,17 +25,23 @@ export default function CompactFilters({ type }: FilterProps) {
       if (search) params.set('search', search); else params.delete('search');
       if (category !== 'All') params.set('category', category); else params.delete('category');
       if (area !== 'All') params.set('area', area); else params.delete('area');
+      if (sortBy !== 'default') params.set('sort', sortBy); else params.delete('sort');
 
       router.push(`/${type}?${params.toString()}`, { scroll: false });
     }, 500);
     return () => clearTimeout(timeout);
-  }, [search, category, area, router, type, searchParams]);
+  }, [search, category, area, sortBy, router, type, searchParams]);
 
   const categories = type === 'places' 
     ? ['All', 'Food & Drinks', 'Entertainment', 'Culture', 'Landmarks & Heritage', 'Outdoors', 'Cinema & Screenings', 'Shopping']
     : ['All', 'Culture', 'Food & Drinks', 'Entertainment', 'Festivals', 'Music'];
 
-  const areas = ['All', 'Gulshan', 'Banani', 'Dhanmondi', 'Uttara', 'Bashundhara', 'Old Dhaka'];
+  const areas = ['All', ...DHAKA_THANAS];
+  const sortOptions = [
+    { id: 'default', label: 'Default' },
+    { id: 'rating_desc', label: 'Top Rated First' },
+    { id: 'rating_asc', label: 'Lowest Rated' },
+  ];
 
   return (
     <div className="w-full space-y-4 mb-8">
@@ -69,8 +77,8 @@ export default function CompactFilters({ type }: FilterProps) {
 
       {/* Expandable Filter Section */}
       {isOpen && (
-        <div className="p-6 rounded-3xl border border-[var(--border)] surface-elevated animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="p-6 rounded-3xl border border-[var(--border)] surface-elevated animate-in fade-in slide-in-from-top-2 duration-300 shadow-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Category Pills */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-4 flex items-center gap-2">
@@ -93,9 +101,9 @@ export default function CompactFilters({ type }: FilterProps) {
             {/* Area Options */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-4 flex items-center gap-2">
-                <MapPin className="h-3.5 w-3.5" /> Area Zone
+                <MapPin className="h-3.5 w-3.5" /> Area (Thana)
               </label>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
                 {areas.map((a) => (
                   <button
                     key={a}
@@ -108,11 +116,31 @@ export default function CompactFilters({ type }: FilterProps) {
                 ))}
               </div>
             </div>
+
+            {/* Sort Options */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-widest text-[var(--text-muted)] mb-4 flex items-center gap-2">
+                <Star className="h-3.5 w-3.5" /> Sort By
+              </label>
+              <div className="flex flex-col gap-2">
+                {sortOptions.map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => setSortBy(opt.id)}
+                    className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-bold transition-all border ${sortBy === opt.id ? 'bg-brand-500 text-white border-brand-500 shadow-lg shadow-brand-500/20' : 'border-[var(--border)] text-[var(--text-muted)] hover:border-brand-500/50 hover:text-[var(--text-primary)]'}`}
+                    style={sortBy !== opt.id ? { backgroundColor: 'var(--bg-card)' } : {}}
+                  >
+                    {opt.label}
+                    {sortBy === opt.id && <ChevronDown className="h-3 w-3 -rotate-90" />}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
           
           <div className="mt-8 pt-6 border-t border-[var(--border)] flex justify-end gap-3">
              <button 
-              onClick={() => { setCategory('All'); setArea('All'); setSearch(''); }}
+              onClick={() => { setCategory('All'); setArea('All'); setSearch(''); setSortBy('default'); }}
               className="px-6 py-2 rounded-xl text-xs font-bold text-[var(--text-muted)] hover:text-brand-500 transition-colors"
              >
                Reset All
@@ -129,3 +157,4 @@ export default function CompactFilters({ type }: FilterProps) {
     </div>
   );
 }
+

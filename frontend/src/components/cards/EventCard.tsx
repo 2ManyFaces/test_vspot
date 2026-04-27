@@ -13,6 +13,8 @@ interface EventProps {
     end_date?: string;
     start_time: string;
     is_wishlisted?: boolean;
+    average_rating: number | string;
+    total_reviews: number;
   };
 }
 
@@ -30,6 +32,7 @@ export default function EventCard({ event }: EventProps) {
           <img
             src={event.cover_image_url || 'https://images.unsplash.com/photo-1540511587346-609804bbdc3c?auto=format&fit=crop&w=600&q=80'}
             alt={event.title}
+            referrerPolicy="no-referrer"
             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
           />
           
@@ -54,11 +57,11 @@ export default function EventCard({ event }: EventProps) {
             >
               {event.title}
             </h3>
-            {event.average_rating > 0 && (
+            {Number(event.average_rating) > 0 && (
               <div className="flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-lg" style={{ backgroundColor: 'var(--bg-elevated)' }}>
                 <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
                 <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
-                  {parseFloat(String(event.average_rating)).toFixed(1)}
+                  {Number(event.average_rating).toFixed(1)}
                 </span>
               </div>
             )}
@@ -90,3 +93,4 @@ export default function EventCard({ event }: EventProps) {
     </Link>
   );
 }
+

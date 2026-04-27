@@ -17,6 +17,7 @@ class User extends Authenticatable
         'password_hash',
         'display_name',
         'bio',
+        'location',
         'profile_photo_url',
         'is_active',
         'google_oauth_id',
@@ -24,6 +25,8 @@ class User extends Authenticatable
         'review_count',
         'wishlist_count',
     ];
+
+    protected $appends = ['last_check_in_at'];
 
     protected $hidden = [
         'password_hash',
@@ -51,6 +54,11 @@ class User extends Authenticatable
     public function notifications()
     {
         return $this->hasMany(Notification::class);
+    }
+
+    public function getLastCheckInAtAttribute()
+    {
+        return $this->checkIns()->latest('checked_in_at')->value('checked_in_at');
     }
 
     public function getAuthPassword()

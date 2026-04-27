@@ -6,7 +6,7 @@ import { ArrowRight, TrendingUp, Star, Sparkles } from 'lucide-react';
 
 async function getPlaces(params?: string) {
   try {
-    const res = await fetch(`http://127.0.0.1:8000/api/places?${params || ''}`, { cache: 'no-store' });
+    const res = await fetch(`http://localhost:8000/api/places?${params || ''}`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed');
     return res.json();
   } catch {
@@ -16,7 +16,7 @@ async function getPlaces(params?: string) {
 
 async function getStats() {
   try {
-    const res = await fetch('http://127.0.0.1:8000/api/discovery/stats', { cache: 'no-store' });
+    const res = await fetch('http://localhost:8000/api/discovery/stats', { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed');
     return res.json();
   } catch {
@@ -55,12 +55,13 @@ export default async function Home() {
           </div>
 
           <div className="space-y-4">
-            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-extrabold tracking-tight leading-none">
+            <h1 className="text-6xl sm:text-7xl lg:text-8xl font-extrabold tracking-tight leading-none" style={{ color: 'var(--text-primary)' }}>
               Find Your{' '}
-              <span className="text-gradient">Vibe.</span>
+              <span className="text-gradient">Vibe</span>
+              <span className="text-gradient animate-blink">.</span>
             </h1>
             <p className="text-lg sm:text-xl max-w-xl mx-auto" style={{ color: 'var(--text-muted)' }}>
-              Explore rooftop cafes, heritage trails, live gigs, and secret spots&nbsp;—
+              Explore restaurants, outdoors, heritage, landmarks, live events, and underrated spots&nbsp;—
               all curated by the Dhaka community.
             </p>
           </div>
@@ -209,3 +210,4 @@ function PlaceGrid({ places }: { places: any[] }) {
     </div>
   );
 }
+

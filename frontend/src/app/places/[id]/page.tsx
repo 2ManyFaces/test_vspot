@@ -10,13 +10,13 @@ async function getPlace(id: string) {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('auth_token')?.value;
-    
+
     const headers: HeadersInit = {};
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const res = await fetch(`http://127.0.0.1:8000/api/places/${id}`, {
+    const res = await fetch(`http://localhost:8000/api/places/${id}`, {
       cache: 'no-store',
       headers
     });
@@ -60,14 +60,14 @@ export default async function PlaceDetail({ params }: { params: Promise<{ id: st
   } catch {
     tags = [];
   }
-  
+
   // Parse operating hours safely
   let operatingHours: Record<string, string> = {};
   try {
-    if (typeof place.operating_hours === 'string') {
+    if (typeof place.operating_hours === 'object' && place.operating_hours !== null) {
+      operatingHours = place.operating_hours;
+    } else if (typeof place.operating_hours === 'string') {
       operatingHours = JSON.parse(place.operating_hours);
-    } else {
-      operatingHours = place.operating_hours || {};
     }
   } catch {
     operatingHours = {};
@@ -81,6 +81,7 @@ export default async function PlaceDetail({ params }: { params: Promise<{ id: st
         <img
           src={place.cover_image_url || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=1600&q=80'}
           alt={place.name}
+          referrerPolicy="no-referrer"
           className="w-full h-full object-cover"
         />
 
@@ -117,13 +118,13 @@ export default async function PlaceDetail({ params }: { params: Promise<{ id: st
                     <MapPin className="h-5 w-5 text-brand-400" />
                     <span className="font-medium">{place.area_name}, {place.area_zone}</span>
                   </div>
-                  
+
                   {/* Big Bookmark Toggle */}
                   <div className="ml-2">
-                    <WishlistButton 
-                      placeId={place.id} 
-                      initialIsWishlisted={place.is_wishlisted} 
-                      showText={true} 
+                    <WishlistButton
+                      placeId={place.id}
+                      initialIsWishlisted={place.is_wishlisted}
+                      showText={true}
                       size="md"
                     />
                   </div>
@@ -185,7 +186,7 @@ export default async function PlaceDetail({ params }: { params: Promise<{ id: st
               <div className="w-full">
                 <CheckInButton placeId={place.id} />
               </div>
-              
+
               <h3 className="text-lg font-bold text-center" style={{ color: 'var(--text-primary)' }}>At a Glance</h3>
               <ul className="space-y-4">
                 <li className="flex justify-between items-center text-sm">
@@ -198,7 +199,7 @@ export default async function PlaceDetail({ params }: { params: Promise<{ id: st
                   <span style={{ color: 'var(--text-muted)' }}>Budget</span>
                   <div className="flex flex-col items-end gap-1">
                     <span className="text-brand-400 font-extrabold text-base tracking-widest px-3 py-1.5 rounded-xl block" style={{ backgroundColor: 'var(--bg-card)' }}>
-                      {place.budget_tier || '$$$'}
+                      {place.budget_tier || '৳৳৳'}
                     </span>
                     {place.budget_label && (
                       <span className="text-[10px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>
@@ -217,7 +218,7 @@ export default async function PlaceDetail({ params }: { params: Promise<{ id: st
                     <span className="text-xs" style={{ color: 'var(--text-muted)' }}>({place.total_reviews} reviews)</span>
                   </div>
                 </li>
-                
+
                 {/* Operating Hours */}
                 {Object.keys(operatingHours).length > 0 && (
                   <li className="pt-4 space-y-3" style={{ borderTop: '1px solid var(--border)' }}>
@@ -245,13 +246,6 @@ export default async function PlaceDetail({ params }: { params: Promise<{ id: st
               </ul>
             </div>
 
-            {/* Map Placeholder */}
-            <div className="h-48 rounded-2xl overflow-hidden relative" style={{ backgroundColor: 'var(--bg-elevated)' }}>
-              <div className="flex flex-col items-center justify-center h-full space-y-3">
-                <MapPin className="h-10 w-10 text-brand-500 drop-shadow-[0_0_15px_rgba(124,58,237,0.5)]" />
-                <span className="text-xs font-medium uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Interactive Map</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>

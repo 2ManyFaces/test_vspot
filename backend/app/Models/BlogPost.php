@@ -12,12 +12,15 @@ class BlogPost extends Model
 
     protected $fillable = [
         'title',
+        'slug',
+        'excerpt',
         'author_id',
         'featured_image_url',
         'body',
         'tags',
         'related_place_ids',
         'is_published',
+        'is_featured',
         'published_at',
     ];
 
@@ -25,6 +28,7 @@ class BlogPost extends Model
         'tags' => 'array',
         'related_place_ids' => 'array',
         'is_published' => 'boolean',
+        'is_featured' => 'boolean',
         'published_at' => 'datetime',
     ];
 

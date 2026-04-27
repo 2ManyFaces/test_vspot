@@ -31,15 +31,35 @@ class ManageBlogController extends Controller
             'excerpt' => 'nullable|string',
             'cover_image_url' => 'nullable|string',
             'is_published' => 'boolean',
+            'is_featured' => 'boolean',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string'
         ]);
 
-        $validated['author_id'] = $request->user()->id;
-        $validated['slug'] = Str::slug($request->title) . '-' . rand(1000, 9999);
-        if ($request->is_published) {
-            $validated['published_at'] = now();
+        $user = $request->user();
+        $authorId = $user instanceof \App\Models\Admin ? $user->id : \App\Models\Admin::first()->id;
+
+        if ($validated['is_featured'] ?? false) {
+            \App\Models\BlogPost::query()->update(['is_featured' => false]);
+        }
+
+        $postData = [
+            'title' => $validated['title'],
+            'body' => $validated['content'],
+            'excerpt' => $validated['excerpt'] ?? null,
+            'featured_image_url' => $validated['cover_image_url'] ?? null,
+            'is_published' => $validated['is_published'] ?? false,
+            'is_featured' => $validated['is_featured'] ?? false,
+            'tags' => $validated['tags'] ?? [],
+            'author_id' => $authorId,
+            'slug' => Str::slug($validated['title']) . '-' . rand(1000, 9999),
+        ];
+
+        if ($postData['is_published']) {
+            $postData['published_at'] = now();
         }
         
-        $post = BlogPost::create($validated);
+        $post = BlogPost::create($postData);
 
         return response()->json([
             'status' => 'success',
@@ -59,20 +79,39 @@ class ManageBlogController extends Controller
     public function update(Request $request, $id)
     {
         $post = BlogPost::findOrFail($id);
-
         $validated = $request->validate([
             'title' => 'sometimes|required|string|max:255',
             'content' => 'sometimes|required|string',
             'excerpt' => 'nullable|string',
             'cover_image_url' => 'nullable|string',
             'is_published' => 'boolean',
+            'is_featured' => 'boolean',
+            'tags' => 'nullable|array',
+            'tags.*' => 'string'
         ]);
 
-        if (isset($validated['is_published']) && $validated['is_published'] && !$post->published_at) {
-            $validated['published_at'] = now();
+        $updateData = [];
+        if (isset($validated['title'])) $updateData['title'] = $validated['title'];
+        if (isset($validated['content'])) $updateData['body'] = $validated['content'];
+        if (isset($validated['excerpt'])) $updateData['excerpt'] = $validated['excerpt'];
+        if (isset($validated['cover_image_url'])) $updateData['featured_image_url'] = $validated['cover_image_url'];
+        if (isset($validated['tags'])) $updateData['tags'] = $validated['tags'];
+        if (isset($validated['is_published'])) {
+            $updateData['is_published'] = $validated['is_published'];
+            if ($validated['is_published'] && !$post->published_at) {
+                $updateData['published_at'] = now();
+            }
         }
 
-        $post->update($validated);
+        if (isset($validated['is_featured'])) {
+            if ($validated['is_featured']) {
+                // Remove featured status from all other posts
+                \App\Models\BlogPost::where('id', '!=', $id)->update(['is_featured' => false]);
+            }
+            $updateData['is_featured'] = $validated['is_featured'];
+        }
+
+        $post->update($updateData);
 
         return response()->json([
             'status' => 'success',

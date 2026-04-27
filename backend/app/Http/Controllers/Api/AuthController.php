@@ -54,6 +54,12 @@ class AuthController extends Controller
             ]);
         }
 
+        if (! $user->is_active) {
+            throw ValidationException::withMessages([
+                'email' => ['Your account has been deactivated. Please contact support.'],
+            ]);
+        }
+
         $token = $user->createToken('auth-token', ['user'])->plainTextToken;
 
         return response()->json([
@@ -78,6 +84,12 @@ class AuthController extends Controller
         if (! $admin || ! Hash::check($request->password, $admin->password_hash)) {
             throw ValidationException::withMessages([
                 'email' => ['Invalid admin credentials.'],
+            ]);
+        }
+
+        if (! $admin->is_active) {
+            throw ValidationException::withMessages([
+                'email' => ['This admin account is currently inactive.'],
             ]);
         }
 
@@ -152,6 +164,10 @@ class AuthController extends Controller
                     'google_oauth_id' => $googleUser->id,
                     'profile_photo_url' => $user->profile_photo_url ?? $googleUser->avatar,
                 ]);
+            }
+
+            if (! $user->is_active) {
+                return redirect()->away('http://localhost:3000/login?error=account_deactivated');
             }
 
             $token = $user->createToken('auth-token', ['user'])->plainTextToken;

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import TablePagination from "@/components/admin/TablePagination";
+import { DHAKA_THANAS } from "@/constants/areas";
 
 interface Event {
   id: number;
@@ -23,6 +24,7 @@ interface Event {
   area_name: string;
   area_zone: string;
   event_date: string;
+  end_date?: string;
   price_type: string;
   price_amount: number;
   is_published: boolean;
@@ -38,9 +40,11 @@ export default function AdminEventsPage() {
     category: "Concerts",
     description: "",
     event_date: "",
+    end_date: "",
     start_time: "18:00",
-    area_name: "",
-    area_zone: "DNCC",
+    area_name: DHAKA_THANAS[0],
+    organiser_name: "",
+    cover_image_url: "",
     price_type: "free",
     price_amount: 0,
     is_published: true
@@ -154,9 +158,11 @@ export default function AdminEventsPage() {
         category: "Concerts",
         description: "",
         event_date: "",
+        end_date: "",
         start_time: "18:00",
-        area_name: "",
-        area_zone: "DNCC",
+        area_name: DHAKA_THANAS[0],
+        organiser_name: "",
+        cover_image_url: "",
         price_type: "free",
         price_amount: 0,
         is_published: true
@@ -228,6 +234,7 @@ export default function AdminEventsPage() {
                       <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-primary)]">
                         <CalendarIcon className="h-3.5 w-3.5 text-red-500" />
                         {new Date(event.event_date).toLocaleDateString()}
+                        {event.end_date && ` - ${new Date(event.end_date).toLocaleDateString()}`}
                       </div>
                       <div className="flex items-center gap-1.5 text-[10px] text-[var(--text-muted)]">
                         <MapPin className="h-3 w-3" /> {event.area_name}
@@ -307,7 +314,7 @@ export default function AdminEventsPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Event Date</label>
+                <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Start Date</label>
                 <input
                   required
                   type="date"
@@ -318,26 +325,28 @@ export default function AdminEventsPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Area Name</label>
+                <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">End Date (Optional)</label>
                 <input
-                  required
-                  value={formData.area_name}
-                  onChange={(e) => setFormData({ ...formData, area_name: e.target.value })}
+                  type="date"
+                  value={formData.end_date || ""}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                   className="w-full px-4 py-3 bg-[var(--bg-default)] border border-[var(--border)] rounded-xl outline-none focus:border-red-500 transition-all"
-                  placeholder="e.g. Banani"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Area Zone</label>
-                <input
-                  required
-                  value={formData.area_zone}
-                  onChange={(e) => setFormData({ ...formData, area_zone: e.target.value })}
-                  className="w-full px-4 py-3 bg-[var(--bg-default)] border border-[var(--border)] rounded-xl outline-none focus:border-red-500 transition-all"
-                  placeholder="e.g. DNCC"
                 />
               </div>
 
+              <div className="space-y-2">
+                <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Area Name (Thana)</label>
+                <select
+                  required
+                  value={formData.area_name ?? DHAKA_THANAS[0]}
+                  onChange={(e) => setFormData({ ...formData, area_name: e.target.value })}
+                  className="w-full px-4 py-3 bg-[var(--bg-default)] border border-[var(--border)] rounded-xl outline-none focus:border-red-500 transition-all font-bold"
+                >
+                  {DHAKA_THANAS.map(thana => (
+                    <option key={thana} value={thana}>{thana}</option>
+                  ))}
+                </select>
+              </div>
               <div className="space-y-2 md:col-span-2">
                 <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Description</label>
                 <textarea
@@ -375,6 +384,26 @@ export default function AdminEventsPage() {
               </div>
 
               <div className="space-y-2 md:col-span-2">
+                <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Organiser Name</label>
+                <input
+                  value={formData.organiser_name ?? ""}
+                  onChange={(e) => setFormData({ ...formData, organiser_name: e.target.value })}
+                  className="w-full px-4 py-3 bg-[var(--bg-default)] border border-[var(--border)] rounded-xl outline-none focus:border-red-500 transition-all"
+                  placeholder="e.g. Dhaka Live"
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Cover Image URL</label>
+                <input
+                  value={formData.cover_image_url ?? ""}
+                  onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
+                  className="w-full px-4 py-3 bg-[var(--bg-default)] border border-[var(--border)] rounded-xl outline-none focus:border-red-500 transition-all"
+                  placeholder="https://images.unsplash.com/..."
+                />
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
                 <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">External Ticket URL</label>
                 <input
                   value={formData.ticket_url ?? ""}
@@ -395,3 +424,4 @@ export default function AdminEventsPage() {
     </div>
   );
 }
+

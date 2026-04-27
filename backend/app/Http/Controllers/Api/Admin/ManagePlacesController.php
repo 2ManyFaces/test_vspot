@@ -28,8 +28,7 @@ class ManagePlacesController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|string',
-            'area_name' => 'required|string',
-            'area_zone' => 'required|string',
+            'area_name' => 'required|string|in:' . implode(',', Place::DHAKA_THANAS),
             'address' => 'required|string',
             'description' => 'required|string',
             'cover_image_url' => 'nullable|string',
@@ -41,9 +40,14 @@ class ManagePlacesController extends Controller
             'is_published' => 'boolean',
         ]);
 
-        $validated['created_by'] = $request->user()->id;
+        $user = $request->user();
+        $adminId = $user instanceof \App\Models\Admin ? $user->id : \App\Models\Admin::first()->id;
+
+        $placeData = $validated;
+        $placeData['created_by'] = $adminId;
+        $placeData['area_zone'] = 'DNCC'; // Default zone
         
-        $place = Place::create($validated);
+        $place = Place::create($placeData);
 
         return response()->json([
             'status' => 'success',
@@ -67,8 +71,7 @@ class ManagePlacesController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'category' => 'sometimes|required|string',
-            'area_name' => 'sometimes|required|string',
-            'area_zone' => 'sometimes|required|string',
+            'area_name' => 'sometimes|required|string|in:' . implode(',', Place::DHAKA_THANAS),
             'address' => 'sometimes|required|string',
             'description' => 'sometimes|required|string',
             'cover_image_url' => 'nullable|string',

@@ -68,7 +68,7 @@ export default function HeroSearch() {
 
       {/* Quick Tags */}
       <div className="flex flex-wrap justify-center gap-2">
-        {['Rooftop Cafes', 'Live Music', 'Heritage Sites', 'Night Markets'].map((tag) => (
+        {['Rooftop', 'Coffee', 'Heritage', 'Music'].map((tag) => (
           <button
             key={tag}
             onClick={() => setQuery(tag)}
@@ -82,3 +82,4 @@ export default function HeroSearch() {
     </div>
   );
 }
+

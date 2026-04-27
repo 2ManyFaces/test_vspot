@@ -3,7 +3,7 @@ import { ArrowRight, BookOpen, Calendar, Tag } from 'lucide-react';
 
 async function getBlogPosts() {
   try {
-    const res = await fetch('http://127.0.0.1:8000/api/blog', { cache: 'no-store' });
+    const res = await fetch('http://localhost:8000/api/blog', { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed');
     return res.json();
   } catch {
@@ -19,7 +19,11 @@ export const metadata = {
 export default async function BlogPage() {
   const { data: posts } = await getBlogPosts();
 
-  const [featured, ...rest] = posts || [];
+  // Find the post marked as featured, fallback to the latest if none exists
+  const featured = posts?.find((p: any) => p.is_featured) || posts?.[0];
+  
+  // All other posts excluding the featured one
+  const rest = posts?.filter((p: any) => p.id !== featured?.id) || [];
 
   return (
     <div className="pb-24" style={{ backgroundColor: 'var(--bg-page)' }}>
@@ -53,8 +57,9 @@ export default async function BlogPage() {
               >
                 <div className="relative h-72 lg:h-auto overflow-hidden">
                   <img
-                    src={featured.featured_image_url}
+                    src={featured.featured_image_url?.startsWith('http') ? featured.featured_image_url : `http://localhost:8000${featured.featured_image_url}`}
                     alt={featured.title}
+                    referrerPolicy="no-referrer"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/20" />
@@ -110,8 +115,9 @@ export default async function BlogPage() {
                   >
                     <div className="relative h-48 overflow-hidden">
                       <img
-                        src={post.featured_image_url}
+                        src={post.featured_image_url?.startsWith('http') ? post.featured_image_url : `http://localhost:8000${post.featured_image_url}`}
                         alt={post.title}
+                        referrerPolicy="no-referrer"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     </div>
@@ -157,3 +163,4 @@ export default async function BlogPage() {
     </div>
   );
 }
+

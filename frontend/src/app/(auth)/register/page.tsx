@@ -28,7 +28,7 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/auth/register", {
+      const res = await fetch("http://localhost:8000/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
@@ -67,7 +67,7 @@ export default function RegisterPage() {
 
         <div className="flex flex-col gap-4 mb-6">
           <a
-            href="http://127.0.0.1:8000/api/auth/google/redirect"
+            href="http://localhost:8000/api/auth/google/redirect"
             className="w-full bg-[#4285F4] hover:bg-[#357ae8] text-white px-6 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 shadow-md flex items-center justify-center gap-3 group"
           >
             <div className="bg-white p-1 rounded-full">
@@ -160,3 +160,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import ReviewSection from '@/components/reviews/ReviewSection';
 import WishlistButton from '@/components/shared/WishlistButton';
 import CheckInButton from '@/components/shared/CheckInButton';
+import VenueStats from '@/components/shared/VenueStats';
 
 import { cookies } from 'next/headers';
 
@@ -16,7 +17,7 @@ async function getEvent(id: string) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const res = await fetch(`http://127.0.0.1:8000/api/events/${id}`, {
+    const res = await fetch(`http://localhost:8000/api/events/${id}`, {
       cache: 'no-store',
       headers
     });
@@ -67,6 +68,7 @@ export default async function EventDetail({ params }: { params: Promise<{ id: st
         <img
           src={event.cover_image_url || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1600&q=80'}
           alt={event.title}
+          referrerPolicy="no-referrer"
           className="w-full h-full object-cover"
         />
 
@@ -101,13 +103,11 @@ export default async function EventDetail({ params }: { params: Promise<{ id: st
                   <MapPin className="h-5 w-5 text-brand-400" />
                   <span className="font-medium">{event.area_name}</span>
                 </div>
-                {rating > 0 && (
-                  <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl backdrop-blur-md" style={{ backgroundColor: 'var(--bg-elevated)' }}>
-                    <Star className="h-5 w-5 text-amber-400 fill-amber-400" />
-                    <span className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{rating.toFixed(1)}</span>
-                    <span className="text-sm" style={{ color: 'var(--text-muted)' }}>({event.total_reviews})</span>
-                  </div>
-                )}
+                <VenueStats 
+                  eventId={event.id} 
+                  initialRating={rating} 
+                  initialTotalReviews={event.total_reviews} 
+                />
                 
                 {/* Big Bookmark Toggle */}
                 <div className="ml-2">
@@ -193,13 +193,11 @@ export default async function EventDetail({ params }: { params: Promise<{ id: st
                 )}
                 <li className="flex justify-between items-center text-sm">
                   <span style={{ color: 'var(--text-muted)' }}>Rating</span>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 px-3 py-1.5 rounded-xl" style={{ backgroundColor: 'var(--bg-card)' }}>
-                      <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                      <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{rating > 0 ? rating.toFixed(1) : '—'}</span>
-                    </div>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>({event.total_reviews || 0} reviews)</span>
-                  </div>
+                  <VenueStats 
+                    eventId={event.id} 
+                    initialRating={rating} 
+                    initialTotalReviews={event.total_reviews || 0} 
+                  />
                 </li>
               </ul>
             </div>

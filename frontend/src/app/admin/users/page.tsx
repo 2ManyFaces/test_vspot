@@ -18,6 +18,7 @@ interface AppUser {
   display_name: string;
   email: string;
   is_active: boolean;
+  profile_photo_url: string | null;
   created_at: string;
 }
 
@@ -120,8 +121,17 @@ export default function AdminUsersPage() {
                 <tr key={user.id} className="hover:bg-red-500/[0.02] transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 font-bold">
-                        {user.display_name.charAt(0).toUpperCase()}
+                      <div className="h-9 w-9 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 font-bold overflow-hidden border border-[var(--border)]">
+                        {user.profile_photo_url ? (
+                          <img 
+                            src={user.profile_photo_url.startsWith('http') ? user.profile_photo_url : `http://localhost:8000${user.profile_photo_url}`} 
+                            alt="" 
+                            referrerPolicy="no-referrer" 
+                            className="h-full w-full object-cover" 
+                          />
+                        ) : (
+                          user.display_name.charAt(0).toUpperCase()
+                        )}
                       </div>
                       <div className="font-bold text-[var(--text-primary)]">{user.display_name}</div>
                     </div>
@@ -169,3 +179,4 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+

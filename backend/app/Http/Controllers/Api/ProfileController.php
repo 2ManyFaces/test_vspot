@@ -19,6 +19,7 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'display_name' => 'sometimes|required|string|max:100',
             'bio' => 'nullable|string|max:1000',
+            'location' => 'nullable|string|max:100',
             'profile_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
@@ -28,6 +29,10 @@ class ProfileController extends Controller
 
         if ($request->has('bio')) {
             $user->bio = $validated['bio'];
+        }
+        
+        if ($request->has('location')) {
+            $user->location = $validated['location'];
         }
 
         if ($request->hasFile('profile_photo')) {
@@ -56,25 +61,39 @@ class ProfileController extends Controller
     {
         $user = $request->user();
 
-        // Load relations. Assuming User model has these methods.
-        // We eager load 'place' inside wishlistItems and checkIns,
-        // and 'reviewable' inside reviews (which represents a Place).
-        $user->load([
-            'reviews.place', 
-            'wishlistItems.place', 
-            'checkIns.place'
-        ]);
+        // Fetch filtered relations to ensure associated entities exist
+        $reviews = $user->reviews()
+            ->whereHas('place')
+            ->with('place')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $wishlist = $user->wishlistItems()
+            ->where(function($q) {
+                $q->whereHas('place')->orWhereHas('event');
+            })
+            ->with(['place', 'event'])
+            ->orderBy('added_at', 'desc')
+            ->get();
+
+        $checkIns = $user->checkIns()
+            ->where(function($q) {
+                $q->whereHas('place')->orWhereHas('event');
+            })
+            ->with(['place', 'event'])
+            ->orderBy('checked_in_at', 'desc')
+            ->get();
 
         return response()->json([
             'status' => 'success',
             'data' => [
-                'reviews' => $user->reviews,
-                'wishlist' => $user->wishlistItems,
-                'check_ins' => $user->checkIns,
+                'reviews' => $reviews,
+                'wishlist' => $wishlist,
+                'check_ins' => $checkIns,
                 'stats' => [
-                    'review_count' => $user->reviews->count(),
-                    'wishlist_count' => $user->wishlistItems->count(),
-                    'check_in_count' => $user->checkIns->count(),
+                    'review_count' => $reviews->count(),
+                    'wishlist_count' => $wishlist->count(),
+                    'check_in_count' => $checkIns->count(),
                 ]
             ]
         ]);

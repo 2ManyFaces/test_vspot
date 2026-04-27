@@ -8,6 +8,8 @@ import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import Cookies from 'js-cookie';
 import ConfirmModal from '../shared/ConfirmModal';
+import Modal from '../shared/Modal';
+import { useRouter } from 'next/navigation';
 
 interface ReviewSectionProps {
   placeId?: number;
@@ -16,7 +18,8 @@ interface ReviewSectionProps {
 }
 
 export default function ReviewSection({ placeId, eventId, initialReviews }: ReviewSectionProps) {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const router = useRouter();
   const [reviews, setReviews] = useState(initialReviews);
   const [editingReview, setEditingReview] = useState<any>(null);
   const [reviewToDelete, setReviewToDelete] = useState<number | null>(null);
@@ -30,7 +33,7 @@ export default function ReviewSection({ placeId, eventId, initialReviews }: Revi
   const refreshReviews = useCallback(async () => {
     try {
       const params = placeId ? `place_id=${placeId}` : `event_id=${eventId}`;
-      const res = await fetch(`http://127.0.0.1:8000/api/reviews?${params}`, { cache: 'no-store' });
+      const res = await fetch(`http://localhost:8000/api/reviews?${params}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setReviews(data.data || []);
@@ -46,7 +49,7 @@ export default function ReviewSection({ placeId, eventId, initialReviews }: Revi
     setIsDeleting(true);
     try {
       const token = Cookies.get('auth_token');
-      const res = await fetch(`http://127.0.0.1:8000/api/reviews/${reviewToDelete}`, {
+      const res = await fetch(`http://localhost:8000/api/reviews/${reviewToDelete}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -57,6 +60,8 @@ export default function ReviewSection({ placeId, eventId, initialReviews }: Revi
       if (res.ok) {
         setReviewToDelete(null);
         refreshReviews();
+        router.refresh();
+        window.dispatchEvent(new CustomEvent('refresh-venue-stats'));
       } else {
         const errorData = await res.json().catch(() => ({}));
         alert(errorData.message || 'Failed to delete review. Please try again.');
@@ -78,16 +83,17 @@ export default function ReviewSection({ placeId, eventId, initialReviews }: Revi
       </div>
 
       {user ? (
-        <ReviewForm
-          placeId={placeId}
-          eventId={eventId}
-          editingReview={editingReview}
-          onCancelEdit={() => setEditingReview(null)}
-          onReviewSubmitted={() => {
-            setEditingReview(null);
-            refreshReviews();
-          }}
-        />
+        role !== 'admin' && (
+          <ReviewForm
+            placeId={placeId}
+            eventId={eventId}
+            onReviewSubmitted={() => {
+              refreshReviews();
+              router.refresh();
+              window.dispatchEvent(new CustomEvent('refresh-venue-stats'));
+            }}
+          />
+        )
       ) : (
         /* ... existing guest message ... */
         <div className="surface-elevated rounded-2xl p-6 border border-[var(--border)] text-center flex flex-col items-center gap-3 mt-6">
@@ -106,10 +112,30 @@ export default function ReviewSection({ placeId, eventId, initialReviews }: Revi
         reviews={reviews} 
         onEdit={(review) => {
           setEditingReview(review);
-          window.scrollTo({ top: document.getElementById('review-form')?.offsetTop ? document.getElementById('review-form')!.offsetTop - 100 : 0, behavior: 'smooth' });
         }}
         onDelete={(id) => setReviewToDelete(id)}
       />
+
+      {/* Edit Review Modal */}
+      <Modal
+        isOpen={editingReview !== null}
+        onClose={() => setEditingReview(null)}
+        title="Edit Your Review"
+      >
+        <ReviewForm
+          placeId={placeId}
+          eventId={eventId}
+          editingReview={editingReview}
+          noBackground={true}
+          onCancelEdit={() => setEditingReview(null)}
+          onReviewSubmitted={() => {
+            setEditingReview(null);
+            refreshReviews();
+            router.refresh();
+            window.dispatchEvent(new CustomEvent('refresh-venue-stats'));
+          }}
+        />
+      </Modal>
 
       <ConfirmModal
         isOpen={reviewToDelete !== null}
@@ -123,3 +149,4 @@ export default function ReviewSection({ placeId, eventId, initialReviews }: Revi
     </div>
   );
 }
+

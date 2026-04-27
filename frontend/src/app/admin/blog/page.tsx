@@ -10,7 +10,8 @@ import {
   FileText,
   Clock,
   Globe,
-  Lock
+  Lock,
+  Star
 } from "lucide-react";
 import Link from "next/link";
 import TablePagination from "@/components/admin/TablePagination";
@@ -26,6 +27,7 @@ interface BlogPost {
 export default function AdminBlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<any>({
@@ -33,7 +35,9 @@ export default function AdminBlogPage() {
     content: "",
     excerpt: "",
     cover_image_url: "",
-    is_published: true
+    is_published: true,
+    is_featured: false,
+    tags: []
   });
 
   const [sortBy, setSortBy] = useState("id-desc");
@@ -77,6 +81,7 @@ export default function AdminBlogPage() {
       ? `http://localhost:8000/api/admin/blog-posts/${formData.id}`
       : "http://localhost:8000/api/admin/blog-posts";
 
+    setSaving(true);
     try {
       const res = await fetch(url, {
         method,
@@ -88,14 +93,18 @@ export default function AdminBlogPage() {
         body: JSON.stringify(formData)
       });
       const data = await res.json();
-      if (data.status === 'success') {
+      if (res.ok && data.status === 'success') {
         setIsModalOpen(false);
         fetchPosts();
       } else {
-        alert("Error saving post: " + JSON.stringify(data.errors));
+        const errorMsg = data.errors ? Object.values(data.errors).flat().join("\n") : (data.message || "Unknown error");
+        alert("Error saving post:\n" + errorMsg);
       }
     } catch (err) {
       console.error(err);
+      alert("An unexpected error occurred while saving.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -134,16 +143,50 @@ export default function AdminBlogPage() {
     currentPage * itemsPerPage
   );
 
-  const openForm = (post: any = null) => {
+  const toggleFeatured = async (post: BlogPost) => {
+    const token = Cookies.get('auth_token');
+    const newStatus = !post.is_featured;
+    
+    try {
+      const res = await fetch(`http://localhost:8000/api/admin/blog-posts/${post.id}`, {
+        method: 'PATCH',
+        headers: { 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({ is_featured: newStatus })
+      });
+
+      if (res.ok) {
+        // If we set this one to featured, unfeature all others in the local state
+        setPosts(posts.map(p => {
+          if (p.id === post.id) return { ...p, is_featured: newStatus };
+          if (newStatus) return { ...p, is_featured: false };
+          return p;
+        }));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleEdit = (post: BlogPost | null) => {
     if (post) {
-      setFormData(post);
+      setFormData({
+        ...post,
+        content: post.body || "",
+        cover_image_url: post.featured_image_url || "",
+        tags: post.tags || []
+      });
     } else {
       setFormData({
         title: "",
         content: "",
         excerpt: "",
         cover_image_url: "",
-        is_published: true
+        is_published: true,
+        tags: []
       });
     }
     setIsModalOpen(true);
@@ -172,7 +215,7 @@ export default function AdminBlogPage() {
             <option value="id-asc">Oldest First (ID)</option>
           </select>
         </div>
-        <button onClick={() => openForm()} className="flex items-center gap-2 px-5 py-2.5 bg-red-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all uppercase tracking-widest">
+        <button onClick={() => handleEdit()} className="flex items-center gap-2 px-5 py-2.5 bg-red-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all uppercase tracking-widest">
           <Plus className="h-4 w-4" /> Write New Post
         </button>
       </div>
@@ -199,6 +242,7 @@ export default function AdminBlogPage() {
                   <td className="px-6 py-4">
                     <div className="font-bold text-[var(--text-primary)] flex items-center gap-2">
                        <FileText className="h-4 w-4 text-red-500" /> {post.title}
+                       {post.is_featured && <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />}
                     </div>
                     <div className="text-xs text-[var(--text-muted)] font-mono">#{post.id}</div>
                   </td>
@@ -220,9 +264,28 @@ export default function AdminBlogPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2 text-[var(--text-muted)]">
-                      <button onClick={() => openForm(post)} className="p-2 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-all"><Edit2 className="h-4 w-4" /></button>
-                      <button onClick={() => handleDelete(post.id)} className="p-2 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"><Trash2 className="h-4 w-4" /></button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button 
+                        onClick={() => toggleFeatured(post)}
+                        className={`p-2 rounded-lg transition-all ${post.is_featured ? 'text-amber-500 bg-amber-500/10' : 'text-[var(--text-muted)] hover:text-amber-500 hover:bg-amber-500/10'}`}
+                        title={post.is_featured ? "Featured" : "Mark as Featured"}
+                      >
+                        <Star className={`h-4 w-4 ${post.is_featured ? 'fill-amber-400' : ''}`} />
+                      </button>
+                      <button 
+                        onClick={() => handleEdit(post)} 
+                        className="p-2 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                        title="Edit Post"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(post.id)} 
+                        className="p-2 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                        title="Delete Post"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -252,7 +315,7 @@ export default function AdminBlogPage() {
                 <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Post Title</label>
                 <input 
                   required 
-                  value={formData.title} 
+                  value={formData.title || ""} 
                   onChange={(e) => setFormData({...formData, title: e.target.value})}
                   className="w-full px-4 py-3 bg-[var(--bg-default)] border border-[var(--border)] rounded-xl outline-none focus:border-red-500 transition-all font-bold text-lg" 
                   placeholder="The Ultimate Guide to Dhaka Street Food..." 
@@ -262,7 +325,7 @@ export default function AdminBlogPage() {
               <div className="space-y-2 md:col-span-2">
                 <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Short Excerpt</label>
                 <input 
-                  value={formData.excerpt} 
+                  value={formData.excerpt || ""} 
                   onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
                   className="w-full px-4 py-3 bg-[var(--bg-default)] border border-[var(--border)] rounded-xl outline-none focus:border-red-500 transition-all" 
                   placeholder="A brief catchy summary for the feed..." 
@@ -274,7 +337,7 @@ export default function AdminBlogPage() {
                 <textarea 
                   required 
                   rows={10} 
-                  value={formData.content} 
+                  value={formData.content || ""} 
                   onChange={(e) => setFormData({...formData, content: e.target.value})}
                   className="w-full px-4 py-3 bg-[var(--bg-default)] border border-[var(--border)] rounded-xl outline-none focus:border-red-500 transition-all font-serif" 
                   placeholder="Write your story here..." 
@@ -284,26 +347,44 @@ export default function AdminBlogPage() {
               <div className="space-y-2 md:col-span-2">
                 <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Cover Image URL</label>
                 <input 
-                  value={formData.cover_image_url} 
+                  value={formData.cover_image_url || ""} 
                   onChange={(e) => setFormData({...formData, cover_image_url: e.target.value})}
                   className="w-full px-4 py-3 bg-[var(--bg-default)] border border-[var(--border)] rounded-xl outline-none focus:border-red-500 transition-all" 
                   placeholder="https://images.unsplash.com/..." 
                 />
               </div>
 
-              <div className="flex items-center gap-2 pt-2">
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Tags (comma separated)</label>
                 <input 
-                  type="checkbox" 
-                  id="blog_published"
-                  checked={formData.is_published}
-                  onChange={(e) => setFormData({...formData, is_published: e.target.checked})}
+                  value={Array.isArray(formData.tags) ? formData.tags.join(", ") : ""} 
+                  onChange={(e) => setFormData({...formData, tags: e.target.value.split(",").map(t => t.trim()).filter(t => t !== "")})}
+                  className="w-full px-4 py-3 bg-[var(--bg-default)] border border-[var(--border)] rounded-xl outline-none focus:border-red-500 transition-all font-bold" 
+                  placeholder="Street Food, Dhaka, Weekend, Gaming" 
                 />
-                <label htmlFor="blog_published" className="text-sm font-bold">Publish to live site</label>
+              </div>
+
+              <div className="flex items-center gap-6 pt-2 border-t border-[var(--border)] mt-4 pt-4">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input 
+                    type="checkbox" 
+                    checked={formData.is_published} 
+                    onChange={(e) => setFormData({...formData, is_published: e.target.checked})}
+                    className="w-4 h-4 rounded border-[var(--border)] text-red-500 focus:ring-red-500 transition-all" 
+                  />
+                  <span className="text-xs font-bold text-[var(--text-primary)] group-hover:text-red-500 transition-colors">Publish Post</span>
+                </label>
               </div>
 
               <div className="flex gap-4 md:col-span-2 pt-6">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-6 py-4 rounded-2xl border border-[var(--border)] font-black uppercase tracking-widest text-xs hover:bg-[var(--bg-default)] transition-all">Discard</button>
-                <button type="submit" className="flex-1 px-6 py-4 rounded-2xl bg-red-500 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all">Save {formData.id ? 'Changes' : 'Article'}</button>
+                <button 
+                  type="submit" 
+                  disabled={saving}
+                  className="flex-1 px-6 py-4 rounded-2xl bg-red-500 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all flex items-center justify-center gap-2"
+                >
+                  {saving ? "Saving..." : (formData.id ? 'Save Changes' : 'Publish Article')}
+                </button>
               </div>
             </form>
           </div>
@@ -312,3 +393,4 @@ export default function AdminBlogPage() {
     </div>
   );
 }
+

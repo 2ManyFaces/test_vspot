@@ -24,6 +24,7 @@ class BlogController extends Controller
                     'author_name' => $post->author->display_name ?? 'VibeSpot',
                     'published_at' => $post->published_at?->toDateString(),
                     'excerpt' => str($post->body)->words(30)->toString(),
+                    'is_featured' => $post->is_featured,
                 ];
             });
 

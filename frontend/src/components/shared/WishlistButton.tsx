@@ -23,15 +23,14 @@ export default function WishlistButton({
   className = '',
   showText = false
 }: WishlistButtonProps) {
-  const { user } = useAuth();
+  const { user, role, wishlistIds, toggleWishlistState } = useAuth();
   const router = useRouter();
-  const [isWishlisted, setIsWishlisted] = useState(initialIsWishlisted);
   const [loading, setLoading] = useState(false);
 
-  // Sync with initial value if it changes externally
-  useEffect(() => {
-    setIsWishlisted(initialIsWishlisted);
-  }, [initialIsWishlisted]);
+  // Derive wishlist status from global context
+  const currentId = (placeId || eventId) as number;
+  const typeKey = placeId ? 'places' : 'events';
+  const isWishlisted = wishlistIds[typeKey].includes(currentId);
 
   const toggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -46,7 +45,7 @@ export default function WishlistButton({
     const token = Cookies.get('auth_token');
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/wishlist/toggle', {
+      const res = await fetch('http://localhost:8000/api/wishlist/toggle', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -60,7 +59,9 @@ export default function WishlistButton({
 
       if (res.ok) {
         const data = await res.json();
-        setIsWishlisted(data.wishlist_status === 'added');
+        const newStatus = data.wishlist_status === 'added';
+        toggleWishlistState(currentId, placeId ? 'place' : 'event', newStatus);
+        window.dispatchEvent(new CustomEvent('refresh-notifications'));
       }
     } catch (err) {
       console.error("Wishlist toggle failed", err);
@@ -87,6 +88,8 @@ export default function WishlistButton({
     ? "bg-brand-500 text-white shadow-lg shadow-brand-500/30 border border-brand-400"
     : "surface border border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--bg-default)]";
 
+  if (role === 'admin') return null;
+
   return (
     <button
       onClick={toggleWishlist}
@@ -107,3 +110,4 @@ export default function WishlistButton({
     </button>
   );
 }
+

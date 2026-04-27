@@ -17,12 +17,14 @@ class WishlistController extends Controller
         
         $places = WishlistItem::where('user_id', $user->id)
             ->whereNotNull('place_id')
+            ->whereHas('place')
             ->with('place')
             ->get()
             ->pluck('place');
             
         $events = WishlistItem::where('user_id', $user->id)
             ->whereNotNull('event_id')
+            ->whereHas('event')
             ->with('event')
             ->get()
             ->pluck('event');
@@ -71,6 +73,16 @@ class WishlistController extends Controller
                 'added_at' => Carbon::now(),
             ]);
             $status = 'added';
+
+            // Trigger Notification
+            $title = $placeId ? 'Place Wishlisted!' : 'Event Wishlisted!';
+            $name = $placeId ? Place::find($placeId)->name : Event::find($eventId)->title;
+            \App\Models\Notification::create([
+                'user_id' => $user->id,
+                'type' => 'wishlist',
+                'title' => $title,
+                'message' => "You've added \"{$name}\" to your wishlist.",
+            ]);
         }
 
         // Optional: Update wishlist count on user model
@@ -81,6 +93,29 @@ class WishlistController extends Controller
             'status' => 'success',
             'wishlist_status' => $status,
             'wishlist_count' => $user->wishlist_count
+        ]);
+    }
+
+    public function ids(Request $request)
+    {
+        $user = $request->user();
+        
+        $placeIds = WishlistItem::where('user_id', $user->id)
+            ->whereNotNull('place_id')
+            ->whereHas('place')
+            ->pluck('place_id');
+            
+        $eventIds = WishlistItem::where('user_id', $user->id)
+            ->whereNotNull('event_id')
+            ->whereHas('event')
+            ->pluck('event_id');
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'places' => $placeIds,
+                'events' => $eventIds
+            ]
         ]);
     }
 }

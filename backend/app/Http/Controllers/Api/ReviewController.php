@@ -58,6 +58,15 @@ class ReviewController extends Controller
 
         $this->syncRatings($request->place_id ? 'place' : 'event', $request->place_id ?? $request->event_id);
 
+        // Trigger Notification
+        $name = $request->place_id ? Place::find($request->place_id)->name : Event::find($request->event_id)->title;
+        \App\Models\Notification::create([
+            'user_id' => $user->id,
+            'type' => 'review',
+            'title' => 'Review Published!',
+            'message' => "Thanks for sharing your experience at \"{$name}\". Your review is now live!",
+        ]);
+
         $review->load('user:id,display_name,profile_photo_url');
 
         return response()->json([

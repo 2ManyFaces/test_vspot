@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import TablePagination from "@/components/admin/TablePagination";
+import { DHAKA_THANAS } from "@/constants/areas";
 
 interface Place {
   id: number;
@@ -35,12 +36,11 @@ export default function AdminPlacesPage() {
   const [formData, setFormData] = useState<any>({
     name: "",
     category: "Food & Drinks",
-    area_name: "",
-    area_zone: "DNCC",
+    area_name: DHAKA_THANAS[0],
     address: "",
     description: "",
     cover_image_url: "",
-    budget_tier: "$$",
+    budget_tier: "৳৳",
     budget_label: "Medium",
     budget_range: "500-2000",
     is_published: true
@@ -165,11 +165,10 @@ export default function AdminPlacesPage() {
       setFormData({
         name: "",
         category: "Food & Drinks",
-        area_name: "",
-        area_zone: "DNCC",
+        area_name: DHAKA_THANAS[0],
         address: "",
         description: "",
-        budget_tier: "$$",
+        budget_tier: "৳৳",
         budget_range: "",
         cover_image_url: "",
         is_published: false,
@@ -251,7 +250,6 @@ export default function AdminPlacesPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-[var(--text-primary)]">{place.area_name}</div>
-                      <div className="text-[10px] text-[var(--text-muted)]">{place.area_zone}</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-xs text-[var(--text-muted)]">
@@ -344,26 +342,18 @@ export default function AdminPlacesPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Area Name</label>
-                <input
+                <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Area Name (Thana)</label>
+                <select
                   required
-                  value={formData.area_name ?? ""}
+                  value={formData.area_name ?? DHAKA_THANAS[0]}
                   onChange={(e) => setFormData({ ...formData, area_name: e.target.value })}
-                  className="w-full px-4 py-3 bg-[var(--bg-default)] border border-[var(--border)] rounded-xl outline-none focus:border-red-500 transition-all"
-                  placeholder="e.g. Dhanmondi"
-                />
+                  className="w-full px-4 py-3 bg-[var(--bg-default)] border border-[var(--border)] rounded-xl outline-none focus:border-red-500 transition-all font-bold"
+                >
+                  {DHAKA_THANAS.map(thana => (
+                    <option key={thana} value={thana}>{thana}</option>
+                  ))}
+                </select>
               </div>
-              <div className="space-y-2">
-                <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Area Zone</label>
-                <input
-                  required
-                  value={formData.area_zone ?? ""}
-                  onChange={(e) => setFormData({ ...formData, area_zone: e.target.value })}
-                  className="w-full px-4 py-3 bg-[var(--bg-default)] border border-[var(--border)] rounded-xl outline-none focus:border-red-500 transition-all"
-                  placeholder="e.g. DSCC"
-                />
-              </div>
-
               <div className="space-y-2 md:col-span-2">
                 <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Address</label>
                 <input
@@ -390,14 +380,14 @@ export default function AdminPlacesPage() {
               <div className="space-y-2">
                 <label className="text-xs font-black text-[var(--text-muted)] uppercase tracking-widest">Budget Tier</label>
                 <select
-                  value={formData.budget_tier ?? "$$"}
+                  value={formData.budget_tier ?? "৳৳"}
                   onChange={(e) => setFormData({ ...formData, budget_tier: e.target.value })}
                   className="w-full px-4 py-3 bg-[var(--bg-default)] border border-[var(--border)] rounded-xl outline-none focus:border-red-500 transition-all"
                 >
-                  <option>$</option>
-                  <option>$$</option>
-                  <option>$$$</option>
-                  <option>$$$$</option>
+                  <option>৳</option>
+                  <option>৳৳</option>
+                  <option>৳৳৳</option>
+                  <option>৳৳৳৳</option>
                 </select>
               </div>
 
@@ -442,3 +432,4 @@ export default function AdminPlacesPage() {
     </div>
   );
 }
+

@@ -32,6 +32,8 @@ class PlaceController extends Controller
         $sort = $request->input('sort', 'rating_desc');
         if ($sort === 'rating_desc') {
             $query->orderBy('average_rating', 'desc');
+        } elseif ($sort === 'rating_asc') {
+            $query->orderBy('average_rating', 'asc');
         } elseif ($sort === 'newest') {
             $query->orderBy('created_at', 'desc');
         }

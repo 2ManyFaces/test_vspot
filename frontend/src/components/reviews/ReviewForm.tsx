@@ -10,6 +10,7 @@ interface ReviewFormProps {
   editingReview?: any;
   onCancelEdit?: () => void;
   onReviewSubmitted?: () => void;
+  noBackground?: boolean;
 }
 
 export default function ReviewForm({ 
@@ -17,7 +18,8 @@ export default function ReviewForm({
   eventId, 
   editingReview, 
   onCancelEdit,
-  onReviewSubmitted 
+  onReviewSubmitted,
+  noBackground = false
 }: ReviewFormProps) {
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
@@ -47,8 +49,8 @@ export default function ReviewForm({
     try {
       const token = Cookies.get("auth_token");
       const url = isEditing 
-        ? `http://127.0.0.1:8000/api/reviews/${editingReview.id}`
-        : 'http://127.0.0.1:8000/api/reviews';
+        ? `http://localhost:8000/api/reviews/${editingReview.id}`
+        : 'http://localhost:8000/api/reviews';
       
       const res = await fetch(url, {
         method: isEditing ? 'PUT' : 'POST',
@@ -71,6 +73,7 @@ export default function ReviewForm({
       }
       setBody('');
       setRating(0);
+      window.dispatchEvent(new CustomEvent('refresh-notifications'));
       onReviewSubmitted?.();
     } catch {
       setError('Something went wrong. Please try again.');
@@ -81,7 +84,7 @@ export default function ReviewForm({
 
   if (submitted) {
     return (
-      <div className="rounded-2xl p-8 text-center space-y-3" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+      <div className={`rounded-2xl text-center space-y-3 ${noBackground ? '' : 'p-8'}`} style={noBackground ? {} : { backgroundColor: 'var(--bg-elevated)' }}>
         <CheckCircle className="h-12 w-12 text-emerald-400 mx-auto" />
         <h3 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Thank you!</h3>
         <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Your review has been submitted successfully.</p>
@@ -96,8 +99,8 @@ export default function ReviewForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-2xl p-6 sm:p-8 space-y-5" style={{ backgroundColor: 'var(--bg-elevated)' }}>
-      <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Write a Review</h3>
+    <form onSubmit={handleSubmit} className={`rounded-2xl space-y-5 ${noBackground ? '' : 'p-6 sm:p-8'}`} style={noBackground ? {} : { backgroundColor: 'var(--bg-elevated)' }}>
+      {!noBackground && <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Write a Review</h3>}
 
       {/* Star Rating */}
       <div className="space-y-2">
@@ -170,3 +173,4 @@ export default function ReviewForm({
     </form>
   );
 }
+

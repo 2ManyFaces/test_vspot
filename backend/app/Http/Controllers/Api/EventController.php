@@ -27,6 +27,10 @@ class EventController extends Controller
         $sort = $request->input('sort', 'date_asc');
         if ($sort === 'date_asc') {
             $query->orderBy('event_date', 'asc');
+        } elseif ($sort === 'rating_desc') {
+            $query->orderBy('average_rating', 'desc');
+        } elseif ($sort === 'rating_asc') {
+            $query->orderBy('average_rating', 'asc');
         } elseif ($sort === 'newest') {
             $query->orderBy('created_at', 'desc');
         }

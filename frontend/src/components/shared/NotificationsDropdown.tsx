@@ -1,51 +1,87 @@
-"use client";
-
 import { useState, useEffect, useRef } from 'react';
 import { Bell, Info, Star, MapPin, Calendar, CheckCircle2, X } from 'lucide-react';
 import Link from 'next/link';
+import Cookies from 'js-cookie';
+import { useAuth } from '@/context/AuthContext';
 
 interface Notification {
-  id: string;
-  type: 'info' | 'success' | 'alert' | 'event';
+  id: string | number;
+  type: string;
   title: string;
   message: string;
-  time: string;
-  read: boolean;
+  created_at: string;
+  is_read: boolean;
 }
-
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: '1',
-    type: 'event',
-    title: 'New Event Nearby',
-    message: 'Live Jazz at Blue Note Banani starts in 2 hours!',
-    time: '2h ago',
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'success',
-    title: 'Review Approved',
-    message: 'Your review for "Neon Nights Rooftop" is now live.',
-    time: '5h ago',
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'info',
-    title: 'New Place Added',
-    message: 'Check out "The Secret Garden", a new cafe in Dhanmondi.',
-    time: '1d ago',
-    read: true,
-  },
-];
 
 export default function NotificationsDropdown() {
   const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const fetchNotifications = async () => {
+    const token = Cookies.get('auth_token');
+    if (!token || !user) return;
+
+    setIsLoading(true);
+    try {
+      const res = await fetch("http://localhost:8000/api/notifications", {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+      if (res.ok) {
+        const result = await res.json();
+        setNotifications(result.data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+  // Optimized polling for notifications
+  useEffect(() => {
+    if (!user) return;
+    
+    // Initial fetch
+    fetchNotifications();
+
+    // Set up polling with visibility awareness
+    const intervalId = setInterval(() => {
+      // Only fetch if tab is active and visible
+      if (document.visibilityState === 'visible' && document.hasFocus()) {
+        fetchNotifications();
+      }
+    }, 60000); // 1 minute interval to reduce load
+
+    // Listener for window focus to refresh when user returns to tab
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchNotifications();
+      }
+    };
+
+    // Listen for manual refreshes from other components (e.g. check-in, wishlist)
+    const handleManualRefresh = () => fetchNotifications();
+
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleVisibilityChange);
+    window.addEventListener('refresh-notifications', handleManualRefresh);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleVisibilityChange);
+      window.removeEventListener('refresh-notifications', handleManualRefresh);
+    };
+  }, [user]);
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -57,18 +93,89 @@ export default function NotificationsDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const markAllRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
+  const markAllRead = async () => {
+    const token = Cookies.get('auth_token');
+    if (!token) return;
+
+    try {
+      const res = await fetch("http://localhost:8000/api/notifications/read-all", {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+      if (res.ok) {
+        setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+      }
+    } catch (error) {
+      console.error("Failed to mark all as read", error);
+    }
+  };
+
+  const markAsRead = async (id: string | number) => {
+    const token = Cookies.get('auth_token');
+    if (!token) return;
+
+    try {
+      const res = await fetch(`http://localhost:8000/api/notifications/${id}/read`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+      if (res.ok) {
+        setNotifications(notifications.map(n => n.id === id ? { ...n, is_read: true } : n));
+      }
+    } catch (error) {
+      console.error("Failed to mark notification as read", error);
+    }
+  };
+
+  const clearAll = async () => {
+    const token = Cookies.get('auth_token');
+    if (!token) return;
+
+    try {
+      const res = await fetch("http://localhost:8000/api/notifications/clear-all", {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+      if (res.ok) {
+        setNotifications([]);
+      }
+    } catch (error) {
+      console.error("Failed to clear notifications", error);
+    }
   };
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'event': return <Calendar className="h-4 w-4 text-sky-500" />;
-      case 'success': return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
-      case 'alert': return <Star className="h-4 w-4 text-amber-500" />;
+      case 'checkin': return <MapPin className="h-4 w-4 text-emerald-500" />;
+      case 'wishlist': return <Star className="h-4 w-4 text-amber-500" />;
+      case 'review': return <CheckCircle2 className="h-4 w-4 text-sky-500" />;
       default: return <Info className="h-4 w-4 text-brand-500" />;
     }
   };
+
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+  };
+
+  if (!user) return null;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -83,68 +190,92 @@ export default function NotificationsDropdown() {
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 border-2 border-[var(--bg-elevated)] rounded-full" />
+          <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-rose-500 border-2 border-[var(--bg-elevated)] rounded-full text-[9px] font-black text-white flex items-center justify-center shadow-lg animate-in zoom-in duration-300">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
         )}
       </button>
 
       {isOpen && (
         <div 
-          className="absolute right-0 mt-3 w-80 sm:w-96 surface-elevated border border-[var(--border)] shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+          className="absolute left-1/2 -translate-x-1/2 mt-3 w-80 sm:w-96 surface-elevated border border-[var(--border)] shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
         >
-          <div className="p-4 border-b border-[var(--border)] flex items-center justify-between">
+          <div className="p-4 border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-default)]/50">
             <h3 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Notifications</h3>
-            <button 
-              onClick={markAllRead}
-              className="text-xs font-semibold text-brand-500 hover:text-brand-400 transition-colors"
-            >
-              Mark all as read
-            </button>
+            {unreadCount > 0 && (
+              <button 
+                onClick={markAllRead}
+                className="text-xs font-semibold text-brand-500 hover:text-brand-400 transition-colors"
+              >
+                Mark all as read
+              </button>
+            )}
           </div>
 
-          <div className="max-h-[400px] overflow-y-auto">
+          <div className="max-h-[400px] overflow-y-auto hide-scrollbar">
             {notifications.length > 0 ? (
               <div className="divide-y divide-[var(--border)]">
                 {notifications.map((n) => (
                   <div 
                     key={n.id} 
-                    className={`p-4 flex gap-4 transition-colors hover:bg-brand-500/5 cursor-pointer ${!n.read ? 'bg-brand-500/[0.02]' : ''}`}
+                    className={`p-4 flex gap-4 transition-colors hover:bg-brand-500/5 group ${!n.is_read ? 'bg-brand-500/[0.02]' : ''}`}
                   >
-                    <div className="mt-1 w-8 h-8 rounded-full bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center shrink-0">
+                    <div className="mt-1 w-9 h-9 rounded-2xl bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center shrink-0 shadow-sm">
                       {getIcon(n.type)}
                     </div>
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className={`text-sm font-bold ${!n.read ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
+                        <p className={`text-[13px] font-bold leading-tight ${!n.is_read ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
                           {n.title}
                         </p>
-                        <span className="text-[10px] font-medium text-[var(--text-muted)] shrink-0">{n.time}</span>
+                        <span className="text-[9px] font-black uppercase tracking-tighter text-[var(--text-muted)] shrink-0">{formatTime(n.created_at)}</span>
                       </div>
-                      <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                      <p className="text-[12px] leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                         {n.message}
                       </p>
+                      
+                      {!n.is_read && (
+                        <div className="pt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              markAsRead(n.id);
+                            }}
+                            className="text-[10px] font-black uppercase tracking-widest text-brand-500 hover:text-brand-400 flex items-center gap-1"
+                          >
+                            <CheckCircle2 className="h-3 w-3" /> Mark as Read
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="py-12 text-center text-[var(--text-muted)] space-y-2">
-                <Bell className="h-8 w-8 mx-auto opacity-20" />
-                <p className="text-sm">No notifications yet</p>
+              <div className="py-16 text-center text-[var(--text-muted)] space-y-3">
+                <div className="w-16 h-16 rounded-full bg-[var(--bg-default)] flex items-center justify-center mx-auto border border-[var(--border)] border-dashed">
+                  <Bell className="h-8 w-8 opacity-20" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{isLoading ? 'Fetching updates...' : 'All caught up!'}</p>
+                  <p className="text-xs">No new notifications at the moment.</p>
+                </div>
               </div>
             )}
           </div>
 
           <div className="p-3 bg-[var(--bg-card)] text-center border-t border-[var(--border)]">
-            <Link 
-              href="/profile?tab=notifications" 
-              className="text-xs font-bold text-[var(--text-muted)] hover:text-brand-500 transition-colors"
-              onClick={() => setIsOpen(false)}
+            <button 
+              onClick={clearAll}
+              disabled={notifications.length === 0}
+              className="w-full py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-rose-500 hover:bg-rose-500/10 transition-all border border-transparent hover:border-rose-500/20 disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              View all notification history
-            </Link>
+              Clear all notifications
+            </button>
           </div>
         </div>
       )}
     </div>
   );
 }
+

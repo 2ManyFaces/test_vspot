@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, ArrowRight } from "lucide-react";
 
@@ -13,6 +13,16 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam === "account_deactivated") {
+      setError("Your account has been deactivated. Please contact support.");
+    } else if (errorParam === "oauth_failed") {
+      setError("Google authentication failed. Please try again.");
+    }
+  }, [searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +30,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/auth/login", {
+      const res = await fetch("http://localhost:8000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ email, password }),
@@ -54,7 +64,7 @@ export default function LoginPage() {
 
         <div className="flex flex-col gap-4 mb-6">
           <a
-            href="http://127.0.0.1:8000/api/auth/google/redirect"
+            href="http://localhost:8000/api/auth/google/redirect"
             className="w-full bg-[#4285F4] hover:bg-[#357ae8] text-white px-6 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 shadow-md flex items-center justify-center gap-3 group"
           >
             <div className="bg-white p-1 rounded-full">
@@ -77,6 +87,12 @@ export default function LoginPage() {
             <span className="bg-[var(--bg-elevated)] px-2 text-[var(--text-muted)] font-medium">Or continue with email</span>
           </div>
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold animate-in fade-in slide-in-from-top-2">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div className="space-y-2">
@@ -127,3 +143,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

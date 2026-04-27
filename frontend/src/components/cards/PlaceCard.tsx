@@ -29,9 +29,10 @@ export default function PlaceCard({ place }: PlaceProps) {
           <img
             src={place.cover_image_url || 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&w=600&q=80'}
             alt={place.name}
+            referrerPolicy="no-referrer"
             className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
           />
-          
+
           {/* Wishlist Button Overlay */}
           <div className="absolute top-3 right-3 z-20">
             <WishlistButton placeId={place.id} initialIsWishlisted={place.is_wishlisted} />
@@ -45,7 +46,7 @@ export default function PlaceCard({ place }: PlaceProps) {
           </div>
           <div className="absolute top-3 right-3">
             <span className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-brand-600/90 text-white backdrop-blur-md">
-              {place.budget_tier || '$$'} {place.budget_label && `· ${place.budget_label}`}
+              {place.budget_tier || '৳৳'} {place.budget_label && `· ${place.budget_label}`}
             </span>
           </div>
         </div>
@@ -90,3 +91,4 @@ export default function PlaceCard({ place }: PlaceProps) {
     </Link>
   );
 }
+

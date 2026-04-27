@@ -14,6 +14,9 @@ class Admin extends Authenticatable
         'email',
         'password_hash',
         'display_name',
+        'bio',
+        'location',
+        'profile_photo_url',
         'is_active',
     ];
 
