@@ -20,7 +20,7 @@ class ManageReviewsController extends Controller
             })->orWhere('comment', 'like', "%{$search}%");
         }
 
-        $reviews = $query->paginate(20);
+        $reviews = $query->paginate(500);
 
         return response()->json([
             'status' => 'success',

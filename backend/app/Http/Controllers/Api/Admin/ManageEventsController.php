@@ -10,7 +10,7 @@ class ManageEventsController extends Controller
 {
     public function index(Request $request)
     {
-        $events = Event::orderBy('event_date', 'desc')->paginate(20);
+        $events = Event::orderBy('event_date', 'desc')->paginate(500);
         return response()->json([
             'status' => 'success',
             'data' => $events->items(),

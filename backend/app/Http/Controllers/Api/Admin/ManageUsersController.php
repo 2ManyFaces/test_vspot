@@ -10,7 +10,7 @@ class ManageUsersController extends Controller
 {
     public function index(Request $request)
     {
-        $users = User::orderBy('created_at', 'desc')->paginate(20);
+        $users = User::orderBy('created_at', 'desc')->paginate(500);
         return response()->json([
             'status' => 'success',
             'data' => $users->items(),

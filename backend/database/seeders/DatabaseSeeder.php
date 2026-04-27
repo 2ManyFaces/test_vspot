@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             'display_name' => 'Arif Rahman',
             'password_hash' => bcrypt('password'),
             'is_active' => true,
+            'created_at' => now()->subDays(rand(1, 7)),
         ]);
 
         $user2 = User::create([
@@ -33,6 +34,7 @@ class DatabaseSeeder extends Seeder
             'display_name' => 'Nadia Hossain',
             'password_hash' => bcrypt('password'),
             'is_active' => true,
+            'created_at' => now()->subDays(rand(1, 7)),
         ]);
 
         $user3 = User::create([
@@ -40,6 +42,7 @@ class DatabaseSeeder extends Seeder
             'display_name' => 'Karim Uddin',
             'password_hash' => bcrypt('password'),
             'is_active' => true,
+            'created_at' => now()->subDays(rand(1, 7)),
         ]);
 
         // ─── REAL DHAKA PLACES ───
@@ -860,6 +863,7 @@ class DatabaseSeeder extends Seeder
             Review::create([
                 ...$r,
                 'reviewable_type' => 'place',
+                'created_at' => now()->subDays(rand(1, 7)),
             ]);
         }
 
@@ -886,7 +890,7 @@ class DatabaseSeeder extends Seeder
                 ...$post,
                 'author_id' => $admin->id,
                 'is_published' => true,
-                'published_at' => now()->subDays(rand(1, 20)),
+                'published_at' => now()->subDays(rand(1, 7)),
             ]);
         }
 

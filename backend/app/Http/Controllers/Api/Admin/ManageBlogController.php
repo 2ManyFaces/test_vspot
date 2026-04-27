@@ -11,7 +11,7 @@ class ManageBlogController extends Controller
 {
     public function index(Request $request)
     {
-        $posts = BlogPost::orderBy('created_at', 'desc')->paginate(20);
+        $posts = BlogPost::orderBy('created_at', 'desc')->paginate(500);
         return response()->json([
             'status' => 'success',
             'data' => $posts->items(),

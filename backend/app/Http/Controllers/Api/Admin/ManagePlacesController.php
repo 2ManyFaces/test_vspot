@@ -11,7 +11,7 @@ class ManagePlacesController extends Controller
 {
     public function index(Request $request)
     {
-        $places = Place::orderBy('created_at', 'desc')->paginate(20);
+        $places = Place::orderBy('created_at', 'desc')->paginate(500);
         return response()->json([
             'status' => 'success',
             'data' => $places->items(),
