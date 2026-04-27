@@ -1,18 +1,25 @@
 # Build stage
-FROM php:8.3-fpm-alpine as builder
+FROM php:8.5-fpm-alpine as builder
 
-# Install system dependencies
+# Install system dependencies needed for compiling PHP extensions
 RUN apk add --no-cache \
     curl \
     git \
     unzip \
+    libpq-dev \
     postgresql-dev \
-    && docker-php-ext-install \
-    pdo \
-    pdo_pgsql \
-    redis \
-    bcmath \
-    opcache
+    icu-dev \
+    linux-headers \
+    autoconf \
+    g++ \
+    make
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo pdo_pgsql bcmath opcache
+
+# Install Redis extension
+RUN pecl install redis \
+    && docker-php-ext-enable redis
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -22,65 +29,51 @@ WORKDIR /app
 # Copy composer files
 COPY backend/composer.json backend/composer.lock* ./
 
-# Install dependencies
+# Install dependencies (ignoring missing scripts temporarily)
 RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist
 
 # Production stage
-FROM php:8.3-fpm-alpine
+FROM php:8.5-fpm-alpine
 
-# Install runtime dependencies
+# Install runtime dependencies required for PostgreSQL and general runtime
 RUN apk add --no-cache \
-    postgresql-libs \
+    libpq \
     postgresql-client \
     supervisor \
-    && docker-php-ext-install \
-    pdo \
-    pdo_pgsql \
-    redis \
-    bcmath \
-    opcache
+    icu-libs \
+    fcgi \
+    && rm -rf /var/cache/apk/*
 
-# Configure PHP extensions
-RUN docker-php-ext-enable \
-    pdo \
-    pdo_pgsql \
-    redis \
-    bcmath \
-    opcache
-
-# Copy PHP configuration
-COPY backend/docker/php/php.ini /usr/local/etc/php/conf.d/app.ini
-COPY backend/docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
-
-# Copy entrypoint script
-COPY backend/docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Copy PHP extensions from builder
+COPY --from=builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
+COPY --from=builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
 
 WORKDIR /app
 
 # Copy application code
 COPY backend . 
 
-# Copy environment file for Docker
-COPY .env.docker .env
+# Copy environment file (if you have one specifically for Docker)
+# COPY .env.docker .env
 
 # Copy vendor from builder
-COPY --from=builder /app/vendor /app/vendor
+COPY --from=builder /app/vendor ./vendor
 
-# Create necessary directories
-RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views \
+# Create necessary directories and set permissions
+RUN mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Set proper permissions
-RUN chown -R www-data:www-data /app && chmod -R 755 /app
+# If a docker-entrypoint exists, ensure it is copied and executable
+# COPY backend/docker-entrypoint.sh /usr/local/bin/
+# RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Expose port
 EXPOSE 9000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost:9000/health || exit 1
+    CMD cgi-fcgi -bind -connect 127.0.0.1:9000 || exit 1
 
-# Start with entrypoint script
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+# Start PHP-FPM
+CMD ["php-fpm"]
