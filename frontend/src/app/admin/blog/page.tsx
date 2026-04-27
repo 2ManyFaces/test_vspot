@@ -20,6 +20,10 @@ interface BlogPost {
   id: number;
   title: string;
   is_published: boolean;
+  is_featured?: boolean;
+  body?: string;
+  featured_image_url?: string;
+  tags?: string[];
   published_at: string;
   created_at: string;
 }
@@ -215,7 +219,7 @@ export default function AdminBlogPage() {
             <option value="id-asc">Oldest First (ID)</option>
           </select>
         </div>
-        <button onClick={() => handleEdit()} className="flex items-center gap-2 px-5 py-2.5 bg-red-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all uppercase tracking-widest">
+        <button onClick={() => handleEdit(null)} className="flex items-center gap-2 px-5 py-2.5 bg-red-500 text-white rounded-xl font-bold text-sm shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all uppercase tracking-widest">
           <Plus className="h-4 w-4" /> Write New Post
         </button>
       </div>

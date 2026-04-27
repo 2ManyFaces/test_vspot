@@ -1,5 +1,5 @@
 # Build stage
-FROM php:8.5-fpm-alpine as builder
+FROM php:8.5-fpm-alpine AS builder
 
 # Install system dependencies needed for compiling PHP extensions
 RUN apk add --no-cache \
@@ -9,13 +9,15 @@ RUN apk add --no-cache \
     libpq-dev \
     postgresql-dev \
     icu-dev \
+    libzip-dev \
+    zlib-dev \
     linux-headers \
     autoconf \
     g++ \
     make
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo pdo_pgsql bcmath opcache
+RUN docker-php-ext-install pdo pdo_pgsql bcmath opcache intl zip
 
 # Install Redis extension
 RUN pecl install redis \
@@ -27,20 +29,22 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 
 # Copy composer files
-COPY backend/composer.json backend/composer.lock* ./
+# Assuming context is the backend directory for cleaner Dockerfile
+COPY composer.json composer.lock* ./
 
-# Install dependencies (ignoring missing scripts temporarily)
-RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist
+# Install dependencies
+RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist --optimize-autoloader
 
 # Production stage
 FROM php:8.5-fpm-alpine
 
-# Install runtime dependencies required for PostgreSQL and general runtime
+# Install runtime dependencies
 RUN apk add --no-cache \
     libpq \
+    libzip \
+    icu-libs \
     postgresql-client \
     supervisor \
-    icu-libs \
     fcgi \
     && rm -rf /var/cache/apk/*
 
@@ -51,10 +55,7 @@ COPY --from=builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
 WORKDIR /app
 
 # Copy application code
-COPY backend . 
-
-# Copy environment file (if you have one specifically for Docker)
-# COPY .env.docker .env
+COPY . . 
 
 # Copy vendor from builder
 COPY --from=builder /app/vendor ./vendor
@@ -63,10 +64,6 @@ COPY --from=builder /app/vendor ./vendor
 RUN mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
-
-# If a docker-entrypoint exists, ensure it is copied and executable
-# COPY backend/docker-entrypoint.sh /usr/local/bin/
-# RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Expose port
 EXPOSE 9000

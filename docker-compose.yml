@@ -38,8 +38,8 @@ services:
   # PHP-FPM (Laravel Backend)
   php:
     build:
-      context: .
-      dockerfile: backend/Dockerfile
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: vibespot_php
     working_dir: /app
     environment:
@@ -81,10 +81,21 @@ services:
       dockerfile: Dockerfile
     container_name: vibespot_frontend
     environment:
-      - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - NODE_ENV=${NODE_ENV:-production}
+      - NEXT_PUBLIC_API_URL=http://localhost/api
     ports:
       - "3000:3000"
+    volumes:
+      - ./frontend:/app:delegated
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - php
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - vibespot_network
 
@@ -107,31 +118,6 @@ services:
         condition: service_started
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - vibespot_network
-
-  # Next.js Frontend
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: vibespot_frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - NEXT_PUBLIC_API_URL=http://localhost/api
-    volumes:
-      - ./frontend:/app:delegated
-      - /app/node_modules
-      - /app/.next
-    depends_on:
-      - php
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 10s
       timeout: 5s
       retries: 5

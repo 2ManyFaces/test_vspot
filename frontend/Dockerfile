@@ -1,15 +1,15 @@
 # Build stage
-FROM node:24-alpine as builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
-# Enable corepack for modern package managers if needed
+# Enable corepack for modern package managers
 RUN corepack enable
 
 # Copy package files
 COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
 
-# Install all dependencies (including devDependencies for build)
+# Install all dependencies
 RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
     elif [ -f pnpm-lock.yaml ]; then pnpm i --frozen-lockfile; \
     else npm install --legacy-peer-deps; \
@@ -18,7 +18,7 @@ RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
 # Copy source code
 COPY . .
 
-# Bypass type checking and linting to ensure builds succeed on new devices
+# Environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
@@ -26,38 +26,39 @@ ENV NODE_ENV=production
 RUN npm run build
 
 # Production stage
-FROM node:24-alpine
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Install only production dependencies
-COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
+# Create a non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile --production; \
-    elif [ -f pnpm-lock.yaml ]; then pnpm i --frozen-lockfile --prod; \
-    else npm install --production --legacy-peer-deps; \
-    fi
-
-# Copy necessary files from builder
-COPY --from=builder /app/.next ./.next
+# Copy public files and static assets
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.ts ./
 
-# Create a non-root user and set permissions
-RUN addgroup -g 1001 -S nodejs \
-    && adduser -S nextjs -u 1001 \
-    && chown -R nextjs:nodejs /app/.next
+# Set the correct permission for prerender cache
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-# Expose port
 EXPOSE 3000
+
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD wget --quiet --tries=1 --spider http://localhost:3000 || exit 1
 
-# Start Next.js application
-CMD ["npm", "start"]
+# Start the application using the standalone server
+CMD ["node", "server.js"]

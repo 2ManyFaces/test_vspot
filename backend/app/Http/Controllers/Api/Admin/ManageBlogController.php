@@ -40,7 +40,7 @@ class ManageBlogController extends Controller
         $authorId = $user instanceof \App\Models\Admin ? $user->id : \App\Models\Admin::first()->id;
 
         if ($validated['is_featured'] ?? false) {
-            \App\Models\BlogPost::query()->update(['is_featured' => false]);
+            BlogPost::query()->update(['is_featured' => false]);
         }
 
         $postData = [
@@ -106,7 +106,7 @@ class ManageBlogController extends Controller
         if (isset($validated['is_featured'])) {
             if ($validated['is_featured']) {
                 // Remove featured status from all other posts
-                \App\Models\BlogPost::where('id', '!=', $id)->update(['is_featured' => false]);
+                BlogPost::where('id', '!=', $id)->update(['is_featured' => false]);
             }
             $updateData['is_featured'] = $validated['is_featured'];
         }
