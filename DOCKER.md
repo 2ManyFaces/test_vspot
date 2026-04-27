@@ -4,11 +4,11 @@ This document explains the Docker setup for the VibeSpot project (Laravel 13 bac
 
 ## Project Stack
 
-- **Backend**: Laravel 13 (PHP 8.3) with PostgreSQL 16 and Redis 7
-- **Frontend**: Next.js 16.2.4 (React 19.2.4) with Node.js 20
+- **Backend**: Laravel 13 (PHP 8.5) with PostgreSQL 18 and Redis 7
+- **Frontend**: Next.js 16.2.4 (React 19.2.4) with Node.js 24
 - **Web Server**: Nginx (Alpine)
 - **Cache**: Redis 7
-- **Database**: PostgreSQL 16
+- **Database**: PostgreSQL 18
 
 ## Prerequisites
 
@@ -21,274 +21,115 @@ This document explains the Docker setup for the VibeSpot project (Laravel 13 bac
 ```
 vibespot/
 ├── backend/                    # Laravel 13 Application
-│   ├── Dockerfile             # PHP 8.3-FPM Image
-│   ├── docker/                # Docker config files
-│   │   └── php/               # PHP configuration
-│   │       ├── php.ini
-│   │       └── www.conf
+│   ├── Dockerfile             # PHP 8.5-FPM Image
+│   ├── docker-entrypoint.sh   # Auto-migration & Setup script
 │   └── .dockerignore
 ├── frontend/                   # Next.js 16 Application
-│   ├── Dockerfile             # Node.js 20 Image
+│   ├── Dockerfile             # Node.js 24 Image (Standalone Mode)
 │   └── .dockerignore
 ├── nginx/                      # Nginx Configuration
-│   └── nginx.conf             # Nginx proxy configuration
+│   └── nginx.conf             # Nginx proxy & FastCGI configuration
 ├── docker-compose.yml         # Main orchestration file
-├── .env.docker                # Docker environment (backend)
-├── .env.docker.compose        # Docker Compose environment
-├── .dockerignore
-└── Makefile                   # Helper commands
+├── .env.docker.example        # Template for Docker environment
+└── .env.docker.compose        # Docker Compose environment secrets
 ```
 
-## Getting Started
+## Getting Started (Quick Run)
 
-### 1. Build and Start Containers
+To run this project on a new device, follow these steps:
+
+### 1. Clone and Prepare Environment
 
 ```bash
-# Using Make (recommended)
-make up
+# 1. Copy the example environment file
+cp .env.docker.example .env.docker.compose
 
-# Or using Docker Compose directly
+# 2. (Optional) Edit .env.docker.compose to customize passwords/keys
+# The default values are already configured for local Docker use.
+```
+
+### 2. Build and Start Containers
+
+```bash
+# Start all services
 docker-compose up -d --build
 ```
 
-This will:
-- Build PHP-FPM image with Laravel
-- Build Next.js image
-- Start PostgreSQL 16
-- Start Redis 7
-- Start Nginx reverse proxy
-- Create all necessary networks and volumes
+This command will:
+- Build the **optimized PHP 8.5** image for the backend.
+- Build the **Next.js 16 Standalone** image for the frontend.
+- Spin up **PostgreSQL 18** and **Redis 7**.
+- Start the **Nginx** reverse proxy to glue everything together.
 
-### 2. Initialize Database
+### 3. Automatic Initialization
+The backend container is equipped with an **auto-entrypoint** script that will automatically:
+- Wait for PostgreSQL to be ready.
+- Generate an `APP_KEY` if missing.
+- Run all database migrations.
+- Clear and optimize Laravel caches.
 
-```bash
-# Run migrations
-make migrate
-
-# Or with seed data
-make migrate-fresh
-```
-
-### 3. Access Services
+### 4. Access Services
 
 | Service | URL | Purpose |
 |---------|-----|---------|
-| Frontend | `http://localhost` | Next.js application |
-| Backend API | `http://localhost/api/*` | Laravel API endpoints |
-| PostgreSQL | `localhost:5432` | Database |
-| Redis | `localhost:6379` | Cache/Queue |
+| **Frontend** | `http://localhost` | Main Next.js application |
+| **Backend API** | `http://localhost/api` | Laravel API endpoints |
+| **PostgreSQL** | `localhost:5432` | Direct database access |
 
-### 4. Access Container Shells
+---
 
+## Common Management Commands
+
+### Logs & Monitoring
 ```bash
-# PHP Container
-make php-shell
-docker-compose exec php /bin/sh
-
-# PostgreSQL Container
-make db-shell
-docker-compose exec postgres psql -U postgres
-
-# Frontend Container
-docker-compose exec frontend /bin/sh
-```
-
-## Common Commands
-
-### Development
-
-```bash
-# Start all containers
-make up
-
-# Stop all containers
-make down
-
-# Restart containers
-make start
-make stop
-
-# View logs from all containers
-make logs
+# View logs from all services
+docker-compose logs -f
 
 # View specific service logs
-make logs-php
-make logs-nginx
-make logs-frontend
+docker-compose logs -f php
+docker-compose logs -f frontend
 ```
 
-### Database Operations
-
+### Accessing Shells
 ```bash
-# Run migrations
-make migrate
+# Laravel Backend Shell
+docker-compose exec php /bin/sh
 
-# Fresh migration with seeding
-make migrate-fresh
-
-# Run seeders
-make seed
-
-# Access database shell
-make db-shell
-```
-
-### PHP/Laravel Commands
-
-```bash
-# Run tests
-make test
-
-# Access Tinker REPL
-make tinker
-
-# Inside PHP container, use artisan directly
-docker-compose exec php php artisan <command>
-```
-
-### Node.js/Frontend Commands
-
-```bash
-# Install dependencies
-docker-compose exec frontend npm install
-
-# Build production bundle
-docker-compose exec frontend npm run build
-
-# Access frontend container
+# Frontend Shell
 docker-compose exec frontend /bin/sh
+
+# Database Shell
+docker-compose exec postgres psql -U postgres
 ```
 
-## Configuration
-
-### Backend Environment (.env.docker)
-
-The backend uses `.env.docker` with Docker-specific settings:
-
-```
-DB_HOST=postgres          # Use Docker service name
-REDIS_HOST=redis          # Use Docker service name
-CACHE_STORE=redis
-SESSION_DRIVER=redis
-QUEUE_CONNECTION=redis
-```
-
-### Frontend Environment
-
-Create `.env.local` in the frontend directory for API URL:
-
-```
-NEXT_PUBLIC_API_URL=http://localhost/api
-```
-
-## Volumes and Persistence
-
-- **Database**: PostgreSQL data persists in `postgres_data` volume
-- **Laravel Storage**: `/app/storage` is mounted from host
-- **Laravel Cache**: `/app/bootstrap/cache` is mounted from host
-- **Frontend Build**: `.next` and `node_modules` are excluded from host mounts
-
-## Networking
-
-All services connect through the `vibespot_network` Docker network:
-- Services communicate using their container names
-- Example: `postgres:5432`, `redis:6379`, `php:9000`
-
-## Production Deployment
-
-### Enable HTTPS
-
-Uncomment the HTTPS server block in `nginx/nginx.conf` and provide:
-- `nginx/ssl/cert.pem` - SSL certificate
-- `nginx/ssl/key.pem` - SSL private key
-
-### Environment Variables
-
-Use `.env.docker.compose` for production secrets:
+### Manual Database Operations
 ```bash
-docker-compose --env-file .env.docker.compose up -d
-```
+# Run a specific artisan command
+docker-compose exec php php artisan migrate:status
 
-### Database Backup
-
-```bash
-# Backup PostgreSQL
-docker-compose exec postgres pg_dump -U postgres postgres > backup.sql
-
-# Restore from backup
-docker-compose exec -T postgres psql -U postgres postgres < backup.sql
+# Refresh database with seeds
+docker-compose exec php php artisan migrate:fresh --seed
 ```
 
 ## Troubleshooting
 
-### Containers won't start
-
+### "Permission Denied" on entrypoint
+If the backend fails to start because of the entrypoint script, ensure it is executable:
 ```bash
-# Check logs
-docker-compose logs
-
-# Rebuild without cache
-docker-compose build --no-cache
-docker-compose up -d
+chmod +x backend/docker-entrypoint.sh
 ```
 
-### Database connection issues
+### Build Failures (Next.js)
+If the frontend build fails during `prerendering`, ensure that any pages using client-side hooks like `useSearchParams()` are marked with `export const dynamic = 'force-dynamic';` or wrapped in `<Suspense>`.
 
-```bash
-# Verify PostgreSQL is running
-docker-compose logs postgres
-
-# Check if database exists
-docker-compose exec postgres psql -U postgres -l
-```
-
-### Port already in use
-
-Change port mappings in `docker-compose.yml`:
-```yaml
-ports:
-  - "8080:80"    # Use port 8080 instead of 80
-```
-
-### PHP extensions missing
-
-Update `backend/Dockerfile` to include additional extensions:
-```dockerfile
-RUN docker-php-ext-install <extension-name>
-```
-
-## Performance Tips
-
-1. **Development Mode**: Use `.dockerignore` to exclude node_modules
-2. **Caching**: Use Redis for sessions and cache
-3. **Opcache**: Enabled in production PHP config
-4. **Volume Mounts**: In production, use only necessary volumes
-
-## Resource Limits
-
-To limit container resources in `docker-compose.yml`:
-
+### Port Conflicts
+If port `80` is already taken on your host machine, change the mapping in `docker-compose.yml`:
 ```yaml
 services:
-  php:
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 512M
-        reservations:
-          cpus: '0.5'
-          memory: 256M
+  nginx:
+    ports:
+      - "8080:80"  # Now accessible at http://localhost:8080
 ```
 
-## Additional Resources
-
-- [Docker Compose Documentation](https://docs.docker.com/compose/)
-- [Laravel Docker Guide](https://laravel.com/docs/deployment)
-- [Next.js Docker Guide](https://nextjs.org/docs/deployment/docker)
-- [PostgreSQL Docker Hub](https://hub.docker.com/_/postgres)
-- [Redis Docker Hub](https://hub.docker.com/_/redis)
-
-## Support
-
-For issues or questions, check the logs with `make logs` or `docker-compose logs -f [service-name]`.
+---
+**Happy Coding!** 🚀

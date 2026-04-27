@@ -6,7 +6,12 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'lh3.googleusercontent.com',
+        hostname: '*.googleusercontent.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.ggpht.com',
         pathname: '/**',
       },
       {
@@ -26,7 +31,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'dynamic-media-cdn.tripadvisor.com',
+        hostname: '*.tripadvisor.com',
         pathname: '/**',
       },
       {
