@@ -1,0 +1,25 @@
+# Local Development Environment Override
+# Copy this to docker-compose.override.yml to enable development features
+
+version: '3.8'
+
+services:
+  php:
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - LOG_LEVEL=debug
+    volumes:
+      - ./backend:/app:delegated
+      - ./backend/storage:/app/storage:delegated
+      - ./backend/bootstrap/cache:/app/bootstrap/cache:delegated
+
+  frontend:
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/app:delegated
+      - /app/node_modules
+      - /app/.next
+    # Run Next.js dev server instead of production build
+    command: npm run dev

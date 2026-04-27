@@ -1,0 +1,18 @@
+# Root .dockerignore
+.git
+.gitignore
+.env.*.local
+node_modules
+npm-debug.log
+yarn-error.log
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+docker-compose.override.yml
+.editorconfig
+*.log
+.tmp
+.cache
+README.md
+LICENSE

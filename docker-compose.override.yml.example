@@ -1,0 +1,66 @@
+# docker-compose.override.yml.example
+# 
+# Copy this file to docker-compose.override.yml for local development overrides
+# This file is ignored by .gitignore
+#
+# Usage: cp docker-compose.override.yml.example docker-compose.override.yml
+#
+
+version: '3.8'
+
+services:
+  php:
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - LOG_LEVEL=debug
+    volumes:
+      # Enable hot reload of code changes
+      - ./backend:/app:delegated
+      - ./backend/storage:/app/storage:delegated
+      - ./backend/bootstrap/cache:/app/bootstrap/cache:delegated
+
+  frontend:
+    environment:
+      - NODE_ENV=development
+    volumes:
+      # Enable hot reload of Next.js
+      - ./frontend:/app:delegated
+      - /app/node_modules
+      - /app/.next
+    # Run dev server instead of production
+    command: npm run dev
+
+  # Mailhog for local email testing (optional)
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - vibespot_network
+
+  # PgAdmin for PostgreSQL management (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - vibespot_network
+
+  # Redis Commander for Redis management (optional)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - vibespot_network
