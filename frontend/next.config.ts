@@ -36,12 +36,6 @@ const nextConfig: NextConfig = {
       }
     ],
   },
-  // @ts-ignore - eslint property might not be recognized in this Next.js version's types
-  eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     // !! WARN !!
     // Dangerously allow production builds to successfully complete even if

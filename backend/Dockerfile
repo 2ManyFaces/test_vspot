@@ -11,13 +11,17 @@ RUN apk add --no-cache \
     icu-dev \
     libzip-dev \
     zlib-dev \
+    libpng-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
     linux-headers \
     autoconf \
     g++ \
     make
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo pdo_pgsql bcmath opcache intl zip
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_pgsql bcmath opcache intl zip gd
 
 # Install Redis extension
 RUN pecl install redis \
@@ -29,7 +33,6 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 
 # Copy composer files
-# Assuming context is the backend directory for cleaner Dockerfile
 COPY composer.json composer.lock* ./
 
 # Install dependencies
@@ -42,6 +45,9 @@ FROM php:8.5-fpm-alpine
 RUN apk add --no-cache \
     libpq \
     libzip \
+    libpng \
+    libjpeg-turbo \
+    freetype \
     icu-libs \
     postgresql-client \
     supervisor \
@@ -65,6 +71,9 @@ RUN mkdir -p storage/logs storage/framework/cache/data storage/framework/session
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
+# Ensure entrypoint is executable
+RUN chmod +x docker-entrypoint.sh
+
 # Expose port
 EXPOSE 9000
 
@@ -72,5 +81,5 @@ EXPOSE 9000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD cgi-fcgi -bind -connect 127.0.0.1:9000 || exit 1
 
-# Start PHP-FPM
-CMD ["php-fpm"]
+# Use entrypoint script to handle migrations and key generation
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
